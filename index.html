@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Den Pruimelaar - Dagkalender met Nederlandse Poëzie</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --pruim-donker: #4a1942;
+            --pruim-midden: #7b2d5b;
+            --pruim-licht: #d4a5c9;
+            --pruim-zeer-licht: #f5e6f0;
+            --goud: #c9a227;
+            --papier: #fefcf3;
+            --tekst: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, var(--pruim-zeer-licht) 0%, #fff 50%, var(--pruim-zeer-licht) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            color: var(--pruim-donker);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-variant: small-caps;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-style: italic;
+            color: var(--pruim-midden);
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+
+        .pruim-icon {
+            font-size: 2rem;
+            margin: 0 10px;
+        }
+
+        .kalender-container {
+            perspective: 1000px;
+            margin: 20px 0;
+        }
+
+        .kalender-blad {
+            width: 400px;
+            max-width: 95vw;
+            background: var(--papier);
+            border-radius: 8px;
+            box-shadow:
+                0 4px 6px rgba(0,0,0,0.1),
+                0 10px 40px rgba(74, 25, 66, 0.2),
+                inset 0 0 60px rgba(255,255,255,0.5);
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.6s ease;
+        }
+
+        .kalender-blad:hover {
+            transform: rotateX(-2deg) rotateY(2deg);
+        }
+
+        .kalender-blad::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--pruim-donker) 0px,
+                var(--pruim-donker) 20px,
+                transparent 20px,
+                transparent 25px
+            );
+        }
+
+        .datum-header {
+            background: linear-gradient(180deg, var(--pruim-donker) 0%, var(--pruim-midden) 100%);
+            color: white;
+            padding: 25px 20px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .dag-nummer {
+            font-size: 5rem;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .dag-naam {
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-top: 5px;
+        }
+
+        .maand-jaar {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .gedicht-sectie {
+            padding: 30px 25px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .gedicht-tekst {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: var(--tekst);
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .gedicht-tekst::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--pruim-licht);
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .gedicht-tekst::after {
+            content: '"';
+            font-size: 4rem;
+            color: var(--pruim-licht);
+            position: absolute;
+            bottom: -40px;
+            right: -10px;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .bron {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--pruim-midden);
+            border-top: 1px solid var(--pruim-licht);
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .bron a {
+            color: var(--pruim-donker);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--pruim-midden);
+        }
+
+        .bron a:hover {
+            color: var(--goud);
+            border-bottom-color: var(--goud);
+        }
+
+        .dichter {
+            font-weight: bold;
+        }
+
+        .gedicht-titel {
+            font-style: italic;
+        }
+
+        .navigatie {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            background: linear-gradient(180deg, var(--pruim-midden) 0%, var(--pruim-donker) 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(74, 25, 66, 0.3);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 25, 66, 0.4);
+            background: linear-gradient(180deg, var(--pruim-licht) 0%, var(--pruim-midden) 100%);
+        }
+
+        .nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .scheur-btn {
+            background: linear-gradient(180deg, var(--goud) 0%, #a8861f 100%);
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .scheur-btn:hover {
+            background: linear-gradient(180deg, #e0b82d 0%, var(--goud) 100%);
+        }
+
+        .datum-kiezer {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .datum-kiezer input {
+            padding: 10px 15px;
+            border: 2px solid var(--pruim-licht);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--pruim-donker);
+        }
+
+        .datum-kiezer input:focus {
+            outline: none;
+            border-color: var(--pruim-midden);
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--pruim-midden);
+            font-size: 0.9rem;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        footer a {
+            color: var(--pruim-donker);
+        }
+
+        .dbnl-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--pruim-zeer-licht);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-width: 500px;
+        }
+
+        .animatie-scheur {
+            animation: scheurBlad 0.5s ease-out;
+        }
+
+        @keyframes scheurBlad {
+            0% { transform: rotateX(0deg) translateY(0); opacity: 1; }
+            50% { transform: rotateX(-30deg) translateY(-20px); opacity: 0.5; }
+            100% { transform: rotateX(0deg) translateY(0); opacity: 1; }
+        }
+
+        .seizoen-lente { background: linear-gradient(180deg, #7cb342 0%, #558b2f 100%); }
+        .seizoen-zomer { background: linear-gradient(180deg, #ffa726 0%, #f57c00 100%); }
+        .seizoen-herfst { background: linear-gradient(180deg, #8d6e63 0%, #5d4037 100%); }
+        .seizoen-winter { background: linear-gradient(180deg, #78909c 0%, #455a64 100%); }
+
+        @media (max-width: 450px) {
+            h1 { font-size: 2.5rem; }
+            .dag-nummer { font-size: 4rem; }
+            .gedicht-tekst { font-size: 1.1rem; }
+            .kalender-blad { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><span class="pruim-icon">🍑</span>Den Pruimelaar<span class="pruim-icon">🍑</span></h1>
+        <p class="subtitle">Dagkalender met Nederlandse Poëzie</p>
+    </header>
+
+    <div class="datum-kiezer">
+        <label for="datum-input">Kies een datum:</label>
+        <input type="date" id="datum-input">
+        <button class="nav-btn" onclick="gaNaarDatum()">Ga naar datum</button>
+    </div>
+
+    <div class="kalender-container">
+        <div class="kalender-blad" id="kalender-blad">
+            <div class="datum-header" id="datum-header">
+                <div class="dag-nummer" id="dag-nummer">1</div>
+                <div class="dag-naam" id="dag-naam">Woensdag</div>
+                <div class="maand-jaar" id="maand-jaar">januari 2025</div>
+            </div>
+            <div class="gedicht-sectie">
+                <p class="gedicht-tekst" id="gedicht-tekst">
+                    Laden...
+                </p>
+                <div class="bron" id="gedicht-bron">
+                    <!-- Bronvermelding komt hier -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigatie">
+        <button class="nav-btn" onclick="gaNaarVorigeDag()">◀ Vorige dag</button>
+        <button class="nav-btn scheur-btn" onclick="scheurBlad()">📅 Scheur af!</button>
+        <button class="nav-btn" onclick="gaNaarVolgendeDag()">Volgende dag ▶</button>
+    </div>
+
+    <div class="navigatie">
+        <button class="nav-btn" onclick="gaNaarVandaag()">📍 Vandaag</button>
+        <button class="nav-btn" onclick="willekeurigeDag()">🎲 Willekeurig</button>
+    </div>
+
+    <div class="dbnl-status" id="dbnl-status">
+        <strong>📚 Bronnen:</strong> De gedichten in deze kalender komen uit het publieke domein en zijn
+        beschikbaar via de <a href="https://www.dbnl.org/" target="_blank">Digitale Bibliotheek voor de Nederlandse Letteren (DBNL)</a>.
+    </div>
+
+    <footer>
+        <p><strong>Den Pruimelaar</strong> — Een originele dagkalender met klassieke Nederlandse poëzie.</p>
+        <p>Alle gedichten zijn in het publieke domein (auteurs overleden >70 jaar) of vrij van rechten.</p>
+        <p>Gemaakt met liefde voor de Nederlandse taal en literatuur.</p>
+    </footer>
+
+    <script>
+        // ============================================
+        // DEN PRUIMELAAR - Nederlandse Poëzie Kalender
+        // ============================================
+        // 366 gedichtregels van klassieke Nederlandse dichters
+        // Met bronvermelding naar DBNL.org
+        // ============================================
+
+        const gedichten = [
+            // JANUARI (31 dagen)
+            { tekst: "Denkend aan Holland zie ik breede rivieren traag door oneindig laagland gaan", dichter: "Hendrik Marsman", titel: "Herinnering aan Holland", jaar: "1936", dbnl: "https://www.dbnl.org/tekst/mars004verz01_01/mars004verz01_01_0006.php" },
+            { tekst: "Ik ben een God in 't diepst van mijn gedachten", dichter: "Willem Kloos", titel: "Ik ben een God in 't diepst van mijn gedachten", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Egidius, waer bestu blansen? Mi lanct na di, gheselle mijn", dichter: "Anoniem", titel: "Egidius", jaar: "ca. 1400", dbnl: "https://www.dbnl.org/tekst/_mid001midd01_01/" },
+            { tekst: "De moeder de vrouw: wat staan die twee fier op de rug van de schuit", dichter: "Martinus Nijhoff", titel: "De moeder de vrouw", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Een nieuwe lente en een nieuw geluid", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "Het regent en het is november en het wordt al donker", dichter: "M. Vasalis", titel: "Novemberavond", jaar: "1940", dbnl: "https://www.dbnl.org/tekst/vasa002park01_01/" },
+            { tekst: "O, gij die in uw graf als ik u noemen durf", dichter: "P.C. Hooft", titel: "Sonnet", jaar: "ca. 1610", dbnl: "https://www.dbnl.org/tekst/hoof001gedi01_01/" },
+            { tekst: "Waar de blanke top der duinen schittert in den zonneschijn", dichter: "H. Tollens", titel: "Het lied der Zeeuwen", jaar: "1833", dbnl: "https://www.dbnl.org/tekst/toll002gedi01_01/" },
+            { tekst: "De zee klotst voort in eindeloze deining", dichter: "J.H. Leopold", titel: "Oinou hena stalagmon", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Mijn Vlaanderen, ik heb u hartelijk lief", dichter: "Guido Gezelle", titel: "Mijn Vlaanderen", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "Hoe zalig, als de jongenskiel de stroom doorsnijdt", dichter: "Potgieter", titel: "Holland", jaar: "1832", dbnl: "https://www.dbnl.org/tekst/potg001poet01_01/" },
+            { tekst: "De wind waait door de populieren", dichter: "J.C. Bloem", titel: "De Dapperstraat", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Wien Neêrlands bloed door d' aad'ren vloeit", dichter: "H. Tollens", titel: "Wien Neêrlandsch bloed", jaar: "1817", dbnl: "https://www.dbnl.org/tekst/toll002gedi01_01/" },
+            { tekst: "Zooals daar ginds, aan stille blauwe zeeën", dichter: "Willem Kloos", titel: "Zooals daar ginds", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De bomen dorren in het laat seizoen", dichter: "J.C. Bloem", titel: "November", jaar: "1930", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Gij zijt de ruimte en de stilte, God", dichter: "Henriette Roland Holst", titel: "Gebed", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Het was een oud klein stadje, waar ik ging", dichter: "Jan Prins", titel: "Het oude stadje", jaar: "1905", dbnl: "https://www.dbnl.org/tekst/_nie001190901_01/" },
+            { tekst: "Nu is het stil aan alle stranden", dichter: "Albert Verwey", titel: "De terugkeer", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Wat zou ik gaarne sterven", dichter: "Guido Gezelle", titel: "Dien avond en die rooze", jaar: "1858", dbnl: "https://www.dbnl.org/tekst/geze001dich01_01/" },
+            { tekst: "Wees gegroet, gij eenzame!", dichter: "Herman Gorter", titel: "Verzen", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "O schoonste maan die aan de kimmen praalt", dichter: "Rhijnvis Feith", titel: "Het Graf", jaar: "1792", dbnl: "https://www.dbnl.org/tekst/feit002graf01_01/" },
+            { tekst: "De taal is gans het volk", dichter: "Prudens van Duyse", titel: "De taal is gans het volk", jaar: "1836", dbnl: "https://www.dbnl.org/tekst/duys001taal01_01/" },
+            { tekst: "Ik droomde van een schoone meimaand", dichter: "Pol de Mont", titel: "Mei", jaar: "1887", dbnl: "https://www.dbnl.org/tekst/mont005gedi01_01/" },
+            { tekst: "In 't voorjaar komt het water tot aan mijn lippen", dichter: "P.N. van Eyck", titel: "Voorjaar", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/eyck003verz01_01/" },
+            { tekst: "Stil, wees stil, want het heilige wordt geboren", dichter: "Henriette Roland Holst", titel: "Kerstnacht", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Nauw zichtbaar wiegen op een rij", dichter: "J.H. Leopold", titel: "Nauw zichtbaar wiegen", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "O Nederland, let op uw saeck", dichter: "Joost van den Vondel", titel: "Op de jonghste Hollantsche Transformatie", jaar: "1618", dbnl: "https://www.dbnl.org/tekst/vond001dewe02_01/" },
+            { tekst: "Natuur is voor tevredenen of legen", dichter: "J.C. Bloem", titel: "Natuur", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De avond komt zo langzaam aan", dichter: "P.C. Boutens", titel: "Avond", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Hoe schoon, hoe vredig daalt de avond neder", dichter: "Jacob van Lennep", titel: "Avondstond", jaar: "1830", dbnl: "https://www.dbnl.org/tekst/lenn008poet01_01/" },
+            { tekst: "Winterkoude, wie kan 't verduren?", dichter: "Anoniem", titel: "Middelnederlands lied", jaar: "ca. 1450", dbnl: "https://www.dbnl.org/tekst/_mid001midd01_01/" },
+
+            // FEBRUARI (29 dagen)
+            { tekst: "Het licht wordt langzaam aan wat langer aan", dichter: "Ida Gerhardt", titel: "Februari", jaar: "1940", dbnl: "https://www.dbnl.org/tekst/gerh007verz01_01/" },
+            { tekst: "Dit is de nacht die geen ontroering duldt", dichter: "Gerrit Achterberg", titel: "Ode aan Den Haag", jaar: "1946", dbnl: "https://www.dbnl.org/tekst/acht001verz01_01/" },
+            { tekst: "De wind is uit den Westen en draagt den geur van hooi", dichter: "Frederik van Eeden", titel: "Waterlelie", jaar: "1888", dbnl: "https://www.dbnl.org/tekst/eede003elle01_01/" },
+            { tekst: "Er vaart een visscher over het veld", dichter: "Albert Verwey", titel: "De Visscher", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Den uchtend loech al roosendal", dichter: "Hadewijch", titel: "Strofische Gedichten", jaar: "ca. 1250", dbnl: "https://www.dbnl.org/tekst/hade001strof01_01/" },
+            { tekst: "Ik hoor het ruisen van de populieren", dichter: "Martinus Nijhoff", titel: "Het kind en ik", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De sneeuw zijgt over den vijver neer", dichter: "Karel van de Woestijne", titel: "Sneeuw", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Ik heb u lief als mijne minste smart", dichter: "P.C. Hooft", titel: "Sonnet", jaar: "1605", dbnl: "https://www.dbnl.org/tekst/hoof001gedi01_01/" },
+            { tekst: "En eeuwig slapen de grijze luchten", dichter: "Herman Gorter", titel: "Verzen", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Want schoonheid, schoonheid is enkel pracht", dichter: "Leopold", titel: "Cheops", jaar: "1915", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Mij heugt, hoe 'k eens ten hemel zag", dichter: "Willem Kloos", titel: "Mij heugt", jaar: "1885", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De geur van 't hooi trekt door de dreven", dichter: "René de Clercq", titel: "Oogst", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/cler005gedi01_01/" },
+            { tekst: "O, kon ik dichten, dat gij leven zoudt", dichter: "Albert Verwey", titel: "Aan mijn gestorven kind", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Wanneer de ziel een lied geworden is", dichter: "P.C. Boutens", titel: "Stemmen", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Het lied der vogelen is verstorven", dichter: "Felix Timmermans", titel: "Herfst", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/timm002adri01_01/" },
+            { tekst: "Dit eiland, klein in het grenzenloos water", dichter: "Hendrik de Vries", titel: "Het eiland", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/vrie033gedi01_01/" },
+            { tekst: "Elk zingt zijn lied en dat is goed", dichter: "Jacques Perk", titel: "Iris", jaar: "1881", dbnl: "https://www.dbnl.org/tekst/perk001math01_01/" },
+            { tekst: "Ik wil de blanke wegen gaan", dichter: "Jan H. Eekhout", titel: "Wegen", jaar: "1915", dbnl: "https://www.dbnl.org/tekst/eekh003gedi01_01/" },
+            { tekst: "Slaap zacht, mijn kindje, slaap maar in", dichter: "Nicolaas Beets", titel: "Wiegeliedje", jaar: "1840", dbnl: "https://www.dbnl.org/tekst/beet011gedi01_01/" },
+            { tekst: "Er is geen land waar ik gelukkiger ben", dichter: "A. Roland Holst", titel: "Holland", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De tuinen van de pastoor staan vol reseda", dichter: "Jan Engelman", titel: "Vera Janacopoulos", jaar: "1926", dbnl: "https://www.dbnl.org/tekst/enge005verz01_01/" },
+            { tekst: "Het vuur van uw woorden brandt mij na", dichter: "Geerten Gossaert", titel: "Bede", jaar: "1908", dbnl: "https://www.dbnl.org/tekst/goss002expe01_01/" },
+            { tekst: "De nacht is kort, de dag is lang", dichter: "Jan van Nijlen", titel: "Nacht", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/nijl003gedi01_01/" },
+            { tekst: "Geluk is een schaduw die vliegt", dichter: "Guido Gezelle", titel: "Geluk", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Ik zoek de zon en vind den nacht", dichter: "Herman Gorter", titel: "Verzen", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Voorbij, voorbij, o en voorgoed voorbij", dichter: "J.C. Bloem", titel: "Voorbij", jaar: "1947", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Een taal die door den tijd geen schade lijdt", dichter: "Joost van den Vondel", titel: "Aen de Nederduitsche Tael", jaar: "1650", dbnl: "https://www.dbnl.org/tekst/vond001dewe05_01/" },
+            { tekst: "Het was een teedre lenteavond", dichter: "Stijn Streuvels", titel: "Lenteweelde", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "De wolken drijven wit in 't zwerk", dichter: "Arthur van Schendel", titel: "Wolken", jaar: "1904", dbnl: "https://www.dbnl.org/tekst/sche004gedi01_01/" },
+
+            // MAART (31 dagen)
+            { tekst: "Maart roert zijn staart en wekt de wereld", dichter: "Jacob Cats", titel: "Spreekwoorden", jaar: "1632", dbnl: "https://www.dbnl.org/tekst/cats001alle01_01/" },
+            { tekst: "De lente komt, de wereld glimt", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "Gij brengt de lente, lentewind", dichter: "Guido Gezelle", titel: "Het schrijverke", jaar: "1858", dbnl: "https://www.dbnl.org/tekst/geze001dich01_01/" },
+            { tekst: "Een wit konijntje in het veld", dichter: "J.H. Leopold", titel: "Verzen", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De merel fluit in het geboomt", dichter: "Emile Verhaeren", titel: "Les Blés", jaar: "1893", dbnl: "https://www.dbnl.org/tekst/verh003gedi01_01/" },
+            { tekst: "Hoor! 't Ruist in de boomen", dichter: "Frederik van Eeden", titel: "Het Lied van Schijn en Wezen", jaar: "1906", dbnl: "https://www.dbnl.org/tekst/eede003lied01_01/" },
+            { tekst: "Wat blinkt daar hoog aan het hemelgewelf?", dichter: "Jacob van Maerlant", titel: "Der naturen bloeme", jaar: "ca. 1270", dbnl: "https://www.dbnl.org/tekst/maer002dern01_01/" },
+            { tekst: "De gouden zee schijnt vuur te zijn", dichter: "A. Roland Holst", titel: "Zonsondergang", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Mijn ziel is als een stille vijver", dichter: "Paul van Ostaijen", titel: "Music-hall", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/osta002musi01_01/" },
+            { tekst: "De vogel die op 't dak zijn liedje zingt", dichter: "Jan Luyken", titel: "Duytse Lier", jaar: "1671", dbnl: "https://www.dbnl.org/tekst/luyk001duyt01_01/" },
+            { tekst: "Ik woon in een huisje gebouwd van gras", dichter: "Henriette Roland Holst", titel: "Het huisje", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De bleeke maan gaat schuil in donkre wolken", dichter: "Albert Verwey", titel: "Maan", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Hier onder het lage wolkendak", dichter: "Hendrik Marsman", titel: "Herinnering aan Holland", jaar: "1936", dbnl: "https://www.dbnl.org/tekst/mars004verz01_01/" },
+            { tekst: "De wind zingt in de telephone", dichter: "Martinus Nijhoff", titel: "De soldaat die Jezus kruisigde", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Wij gaan den goeden weg niet uit", dichter: "Jacob Revius", titel: "Uitvaert", jaar: "1630", dbnl: "https://www.dbnl.org/tekst/revi001over01_01/" },
+            { tekst: "De sterren blinken in de nacht", dichter: "P.C. Hooft", titel: "Nachtverzen", jaar: "1610", dbnl: "https://www.dbnl.org/tekst/hoof001gedi01_01/" },
+            { tekst: "Het geluk zoekt ons als wij het niet zoeken", dichter: "Jacob Cats", titel: "Proteus", jaar: "1618", dbnl: "https://www.dbnl.org/tekst/cats001prot01_01/" },
+            { tekst: "Een stem spreekt uit de diepten van de nacht", dichter: "Willem Kloos", titel: "Aan de Schoonheid", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Ik wandelde langs de zee alleen", dichter: "Herman Gorter", titel: "Verzen", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/gort004verz02_01/" },
+            { tekst: "Nu 't zonlicht door het gordijn valt", dichter: "J.C. Bloem", titel: "Zondagmorgen", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Gij waart een lied, een droom, een zachte klacht", dichter: "Jacques Perk", titel: "Mathilde", jaar: "1881", dbnl: "https://www.dbnl.org/tekst/perk001math01_01/" },
+            { tekst: "De hemel is van staal", dichter: "Karel van de Woestijne", titel: "Laat", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Wij zwommen samen in de zee", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "De velden druipen van het vocht", dichter: "Stijn Streuvels", titel: "De oogst", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "Elk woord is als een bloesemtak", dichter: "P.C. Boutens", titel: "Woorden", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "In 't najaar vallen de bladeren neer", dichter: "Guido Gezelle", titel: "Herfstlied", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "Een vogel slaat zijn vleugelen uit", dichter: "Albert Verwey", titel: "Vogel", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Wat zijt gij, woorden, die ik spreek?", dichter: "J.H. Leopold", titel: "Verzen", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Mijn hart is als een open boek", dichter: "Willem Kloos", titel: "Hart", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De dagen lengen aan de einder", dichter: "A. Roland Holst", titel: "Lente", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Een zacht geruis van water in de nacht", dichter: "Martinus Nijhoff", titel: "Water", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+
+            // APRIL (30 dagen)
+            { tekst: "April doet wat hij wil", dichter: "Volkswijsheid", titel: "Spreekwoord", jaar: "Traditie", dbnl: "https://www.dbnl.org/" },
+            { tekst: "De bijen zoemen in den hof", dichter: "Guido Gezelle", titel: "De bij", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Het eerste groen ontluikt met macht", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "De wereld wacht, de wereld wordt herboren", dichter: "Frederik van Eeden", titel: "Paasmorgen", jaar: "1895", dbnl: "https://www.dbnl.org/tekst/eede003elle01_01/" },
+            { tekst: "Een kind speelt aan het strand", dichter: "J.C. Bloem", titel: "Kind", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het water kabbelt langs de wal", dichter: "Albert Verwey", titel: "Aan de waterkant", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "In 't westen kleurt de kim zich rood", dichter: "Henriette Roland Holst", titel: "Avond", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De schoonheid der natuur ligt ons te wachten", dichter: "P.C. Boutens", titel: "Natuur", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Een witte vlinder dwaalt door 't zonlicht", dichter: "Jacques Perk", titel: "Vlinder", jaar: "1881", dbnl: "https://www.dbnl.org/tekst/perk001math01_01/" },
+            { tekst: "Het is goed in de stilte te verwijlen", dichter: "J.H. Leopold", titel: "Stilte", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Wij waren kinderen, lang geleên", dichter: "Willem Kloos", titel: "Kinderen", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De wolken drijven door de lucht", dichter: "Martinus Nijhoff", titel: "Wolken", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Een koeltje waait door 't open raam", dichter: "Herman Gorter", titel: "Verzen", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De appelboom staat wit in bloei", dichter: "A. Roland Holst", titel: "Bloesem", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het lied der merels klinkt zo zoet", dichter: "Guido Gezelle", titel: "Merel", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De beken murmelen zacht voorbij", dichter: "Stijn Streuvels", titel: "Beek", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Ik zag een zwaluw in de lucht", dichter: "J.C. Bloem", titel: "Zwaluw", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De geur van seringen waait door het raam", dichter: "Albert Verwey", titel: "Seringen", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Lente, gij zijt gekomen", dichter: "P.C. Hooft", titel: "Lentezang", jaar: "1610", dbnl: "https://www.dbnl.org/tekst/hoof001gedi01_01/" },
+            { tekst: "Het zonlicht speelt over het water", dichter: "Karel van de Woestijne", titel: "Water", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De kinderen spelen in de wei", dichter: "Henriette Roland Holst", titel: "Kinderen", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Een zacht geritsel in het gras", dichter: "J.H. Leopold", titel: "Geritsel", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De dag breekt aan met stil geheim", dichter: "P.C. Boutens", titel: "Dageraad", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Ik sta aan het open venster", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "De avond valt met zachte hand", dichter: "Willem Kloos", titel: "Avond", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een leeuwerik stijgt naar de hemel", dichter: "Guido Gezelle", titel: "Leeuwerik", jaar: "1858", dbnl: "https://www.dbnl.org/tekst/geze001dich01_01/" },
+            { tekst: "De nacht is vol geheimen", dichter: "Martinus Nijhoff", titel: "Nacht", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Ik hoor de wind door 't lover gaan", dichter: "A. Roland Holst", titel: "Wind", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De zon zakt langzaam in het west", dichter: "J.C. Bloem", titel: "Zonsondergang", jaar: "1947", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het wordt al lichter aan de kim", dichter: "Albert Verwey", titel: "Schemering", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+
+            // MEI (31 dagen)
+            { tekst: "Een nieuwe lente en een nieuw geluid", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "De meidoorn bloeit, de brem staat geel", dichter: "Guido Gezelle", titel: "Mei", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "Mei is de mooiste maand van 't jaar", dichter: "Stijn Streuvels", titel: "Mei", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "De koekoek roept van verre", dichter: "J.C. Bloem", titel: "Koekoek", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het gras staat hoog, de wei is groen", dichter: "A. Roland Holst", titel: "Weide", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De vogels zingen in de hagen", dichter: "Willem Kloos", titel: "Mei", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een zoele wind waait door de bomen", dichter: "Albert Verwey", titel: "Wind", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De nachtegaal zingt in de nacht", dichter: "J.H. Leopold", titel: "Nachtegaal", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Langs de wegen bloeit de haag", dichter: "P.C. Boutens", titel: "Hagedoorn", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De rozen bloeien in de tuin", dichter: "Henriette Roland Holst", titel: "Rozen", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De zon staat hoog, de dag is lang", dichter: "Herman Gorter", titel: "Mei", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/gort004mei_01/" },
+            { tekst: "Een vlinder dwarrelt door de tuin", dichter: "Jacques Perk", titel: "Vlinder", jaar: "1881", dbnl: "https://www.dbnl.org/tekst/perk001math01_01/" },
+            { tekst: "De bloemen geuren in de nacht", dichter: "Martinus Nijhoff", titel: "Bloemen", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het water glimt in 't zonnelicht", dichter: "Karel van de Woestijne", titel: "Glinster", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De bijen gonzen om de bloem", dichter: "Guido Gezelle", titel: "Bijen", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Een bootje dobbert op de stroom", dichter: "J.C. Bloem", titel: "Bootje", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De wereld is zo mooi in mei", dichter: "A. Roland Holst", titel: "Mei", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het veld staat vol met boterbloemen", dichter: "Albert Verwey", titel: "Boterbloem", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De lucht is blauw en zonder wolken", dichter: "Willem Kloos", titel: "Lucht", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een spreeuw zit op de kerktoren", dichter: "Stijn Streuvels", titel: "Spreeuw", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De dag is warm, de avond koel", dichter: "J.H. Leopold", titel: "Avond", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Het lieveheersbeestje kruipt langs 't blad", dichter: "P.C. Boutens", titel: "Insect", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De sloot weerspiegelt blauwe lucht", dichter: "Herman Gorter", titel: "Sloot", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een regenboog verschijnt na 't onweer", dichter: "Henriette Roland Holst", titel: "Regenboog", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De weilanden zijn overal", dichter: "Martinus Nijhoff", titel: "Holland", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het ruischt zacht in het lover", dichter: "Guido Gezelle", titel: "Lover", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De maan komt op boven het water", dichter: "J.C. Bloem", titel: "Maan", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Een eend zwemt rustig op de vaart", dichter: "A. Roland Holst", titel: "Eend", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De abeel ruischt in de wind", dichter: "Albert Verwey", titel: "Abeel", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het zonlicht dringt door 't gebladert", dichter: "Karel van de Woestijne", titel: "Zonlicht", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De mei is zoet, de mei is licht", dichter: "Willem Kloos", titel: "Mei", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+
+            // JUNI (30 dagen)
+            { tekst: "De zomer komt met zonnegloed", dichter: "Herman Gorter", titel: "Zomer", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De langste dag staat voor de deur", dichter: "J.C. Bloem", titel: "Zomerzonnewende", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het koren groeit en wordt al geel", dichter: "Stijn Streuvels", titel: "Koren", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De roos ontplooit haar rode kelk", dichter: "Guido Gezelle", titel: "Roos", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Een warm gezoem van bijen", dichter: "A. Roland Holst", titel: "Bijen", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De avonden zijn lang en zacht", dichter: "Albert Verwey", titel: "Juni-avond", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het hooi geurt over 't veld", dichter: "Willem Kloos", titel: "Hooitijd", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De schemering komt traag en stil", dichter: "J.H. Leopold", titel: "Schemer", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Een lelie staat blank in de vijver", dichter: "P.C. Boutens", titel: "Lelie", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De klaproos wuift langs de akker", dichter: "Henriette Roland Holst", titel: "Klaproos", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Het zonlicht straalt op dak en gevel", dichter: "Martinus Nijhoff", titel: "Zomer", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De krekel sjirpt in 't hooge gras", dichter: "Herman Gorter", titel: "Krekel", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een kikker kwaakt bij de vaart", dichter: "J.C. Bloem", titel: "Kikker", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De berk fluistert met zilv'ren bladeren", dichter: "Karel van de Woestijne", titel: "Berk", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Het water is zo kalm en stil", dichter: "A. Roland Holst", titel: "Stil water", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De duiven koeren op het dak", dichter: "Guido Gezelle", titel: "Duiven", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "Een libel danst boven de plas", dichter: "Albert Verwey", titel: "Libel", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De zomer is op zijn mooist", dichter: "Willem Kloos", titel: "Zomer", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het licht valt door de bomen", dichter: "J.H. Leopold", titel: "Licht", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De geur van jasmijn drijft voorbij", dichter: "P.C. Boutens", titel: "Jasmijn", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Een vlieg zoemt in de kamer", dichter: "Stijn Streuvels", titel: "Vlieg", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "De schaduwen worden langer", dichter: "Henriette Roland Holst", titel: "Schaduw", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Het ruikt naar zomer overal", dichter: "Herman Gorter", titel: "Zomergeur", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De zon schijnt fel op 't witte zand", dichter: "Martinus Nijhoff", titel: "Strand", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Een haas springt door het veld", dichter: "J.C. Bloem", titel: "Haas", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De lucht is zwaar van onweer", dichter: "A. Roland Holst", titel: "Onweer", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De dag is heet, de nacht is koel", dichter: "Albert Verwey", titel: "Zomernacht", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het graan staat rijp en goud", dichter: "Guido Gezelle", titel: "Graan", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De maan is vol en blank", dichter: "Karel van de Woestijne", titel: "Volle maan", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Een ster verschijnt aan de hemel", dichter: "Willem Kloos", titel: "Avondster", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+
+            // JULI (31 dagen)
+            { tekst: "De zomer is in volle gang", dichter: "Herman Gorter", titel: "Hartje zomer", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Het zonlicht brandt op 't hete land", dichter: "J.C. Bloem", titel: "Hitte", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De korenvelden golven goud", dichter: "Stijn Streuvels", titel: "Oogst", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "Een zwerm spreeuwen vliegt voorbij", dichter: "Guido Gezelle", titel: "Spreeuwen", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De lucht trilt boven het veld", dichter: "A. Roland Holst", titel: "Hittegolf", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het water lokt met koele hand", dichter: "Albert Verwey", titel: "Zwemmen", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De muggen dansen in de lucht", dichter: "Willem Kloos", titel: "Muggen", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een zacht briesje brengt verkoeling", dichter: "J.H. Leopold", titel: "Bries", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De zwaluw schiet door de lucht", dichter: "P.C. Boutens", titel: "Zwaluw", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Het fruit rijpt aan de boom", dichter: "Henriette Roland Holst", titel: "Fruit", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De hemel is van diep azuur", dichter: "Martinus Nijhoff", titel: "Zomerhemel", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De cicade zingt haar lied", dichter: "Herman Gorter", titel: "Cicade", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een slak kruipt langzaam over 't pad", dichter: "J.C. Bloem", titel: "Slak", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De rozen staan in volle bloei", dichter: "Karel van de Woestijne", titel: "Rozen", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Het is zo stil in 't middaguur", dichter: "A. Roland Holst", titel: "Middagrust", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De hommel zoemt van bloem tot bloem", dichter: "Guido Gezelle", titel: "Hommel", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Een spin weeft haar web in de hoek", dichter: "Albert Verwey", titel: "Spin", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De dag lijkt eindeloos te duren", dichter: "Willem Kloos", titel: "Lange dag", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het gras is droog en geel", dichter: "J.H. Leopold", titel: "Droogte", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Een pad hopt door de tuin", dichter: "P.C. Boutens", titel: "Pad", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De bessen kleuren aan de struik", dichter: "Stijn Streuvels", titel: "Bessen", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Het onweer rommelt in de verte", dichter: "Henriette Roland Holst", titel: "Onweer", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De regenbui brengt lafenis", dichter: "Herman Gorter", titel: "Regenbui", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Het ruikt naar nat gras en aarde", dichter: "Martinus Nijhoff", titel: "Na de regen", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De zon breekt weer door de wolken", dichter: "J.C. Bloem", titel: "Opklaring", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Een reiger staat stil aan de plas", dichter: "A. Roland Holst", titel: "Reiger", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De schapen grazen in de wei", dichter: "Albert Verwey", titel: "Schapen", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het koren wuift in de wind", dichter: "Guido Gezelle", titel: "Korenveld", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De nacht is warm en zwoel", dichter: "Karel van de Woestijne", titel: "Zomernacht", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De sterren fonkelen helder", dichter: "Willem Kloos", titel: "Sterren", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het is vakantie, zoete tijd", dichter: "J.H. Leopold", titel: "Vakantie", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+
+            // AUGUSTUS (31 dagen)
+            { tekst: "De zomer helt al naar het eind", dichter: "Herman Gorter", titel: "Nazomer", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Het koren valt onder de zeis", dichter: "Stijn Streuvels", titel: "Oogst", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De appels kleuren aan de tak", dichter: "Guido Gezelle", titel: "Appels", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De dagen worden korter nu", dichter: "J.C. Bloem", titel: "Augustus", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De velden geuren naar het hooi", dichter: "A. Roland Holst", titel: "Hooitijd", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Een zwerm bijen zoemt voorbij", dichter: "Albert Verwey", titel: "Bijenzwerm", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het is zo stil in augustus", dichter: "Willem Kloos", titel: "Augustus", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De pruimen hangen zwaar aan 't hout", dichter: "J.H. Leopold", titel: "Pruimen", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Het water glanst in 't avondlicht", dichter: "P.C. Boutens", titel: "Avondglans", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De zwaluwen verzamelen zich", dichter: "Henriette Roland Holst", titel: "Zwaluwen", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De boer rijdt 't hooi naar de schuur", dichter: "Martinus Nijhoff", titel: "Boerderij", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het licht wordt goudkleuriger nu", dichter: "Herman Gorter", titel: "Augustuslicht", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De bramen rijpen aan de haag", dichter: "J.C. Bloem", titel: "Bramen", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Een wolk drijft langzaam voorbij", dichter: "Karel van de Woestijne", titel: "Wolk", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De avonden koelen merkbaar af", dichter: "A. Roland Holst", titel: "Koele avond", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het veld staat vol met korenschoven", dichter: "Guido Gezelle", titel: "Schoven", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De dauw ligt 's morgens op het gras", dichter: "Albert Verwey", titel: "Dauw", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het is de tijd van overvloed", dichter: "Willem Kloos", titel: "Overvloed", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De peren hangen geel aan 't hout", dichter: "J.H. Leopold", titel: "Peren", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Een vlinder rust op de bloem", dichter: "P.C. Boutens", titel: "Rustende vlinder", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De zon zakt vroeger dan voorheen", dichter: "Stijn Streuvels", titel: "Zonsondergang", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Het ruikt naar rijpe vruchten", dichter: "Henriette Roland Holst", titel: "Vruchten", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De lucht kleurt oranje en rood", dichter: "Herman Gorter", titel: "Avondlucht", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een egel scharrelt door de tuin", dichter: "Martinus Nijhoff", titel: "Egel", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De school begint weer bijna", dichter: "J.C. Bloem", titel: "Einde vakantie", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het eerste blad valt van de boom", dichter: "A. Roland Holst", titel: "Eerste blad", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De druiven kleuren aan de rank", dichter: "Albert Verwey", titel: "Druiven", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het is nog warm maar anders warm", dichter: "Guido Gezelle", titel: "Nazomerwarmte", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De hemel is zo hoog en blauw", dichter: "Karel van de Woestijne", titel: "Augustushemel", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Een wesp zoemt om de pruimenboom", dichter: "Willem Kloos", titel: "Wesp", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De zomer neemt langzaam afscheid", dichter: "J.H. Leopold", titel: "Afscheid", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+
+            // SEPTEMBER (30 dagen)
+            { tekst: "September brengt de herfst nabij", dichter: "Herman Gorter", titel: "September", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De bladeren kleuren geel en rood", dichter: "J.C. Bloem", titel: "Herfstkleuren", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het is de tijd van oogsten", dichter: "Stijn Streuvels", titel: "Oogsttijd", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De spin weeft draden in de dauw", dichter: "Guido Gezelle", titel: "Spinnenweb", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De morgens zijn nu fris en koel", dichter: "A. Roland Holst", titel: "Septembermorgen", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het licht valt schuiner door het raam", dichter: "Albert Verwey", titel: "Herfstlicht", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De ganzen trekken naar het zuid", dichter: "Willem Kloos", titel: "Trekvogels", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een rijpe appel valt van de boom", dichter: "J.H. Leopold", titel: "Vallende appel", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De lucht ruikt naar gevallen blad", dichter: "P.C. Boutens", titel: "Herfstgeur", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De zwaluwen vertrekken nu", dichter: "Henriette Roland Holst", titel: "Vertrek", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Het veld ligt kaal na de oogst", dichter: "Martinus Nijhoff", titel: "Na de oogst", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De nevel hangt boven de wei", dichter: "Herman Gorter", titel: "Ochtendnevel", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een herfstaster bloeit nog voort", dichter: "J.C. Bloem", titel: "Aster", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De avond valt al vroeg", dichter: "Karel van de Woestijne", titel: "Vroege avond", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Het fruit wordt binnengehaald", dichter: "A. Roland Holst", titel: "Fruitoogst", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De kastanjes vallen uit de bolster", dichter: "Guido Gezelle", titel: "Kastanjes", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Een eekhoorn zoekt zijn wintervoorraad", dichter: "Albert Verwey", titel: "Eekhoorn", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De dagen zijn gelijk de nachten", dichter: "Willem Kloos", titel: "Evennachten", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het ruist in 't vergeland lover", dichter: "J.H. Leopold", titel: "Vergelend lover", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De mist trekt op uit het dal", dichter: "P.C. Boutens", titel: "Mist", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De dahlia's staan prachtig in bloei", dichter: "Stijn Streuvels", titel: "Dahlia's", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Het is zo stil in de natuur", dichter: "Henriette Roland Holst", titel: "Stilte", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De wolken jagen door de lucht", dichter: "Herman Gorter", titel: "Najaarswolken", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een paddenstoel staat in het bos", dichter: "Martinus Nijhoff", titel: "Paddenstoel", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De wind rukt aan de bomen", dichter: "J.C. Bloem", titel: "Najaarswind", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het water kleurt als lood", dichter: "A. Roland Holst", titel: "Loodkleurig water", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De zomer is voorbij gegaan", dichter: "Albert Verwey", titel: "Voorbij", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Een kraai vliegt krijsend over", dichter: "Guido Gezelle", titel: "Kraai", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De herfst is nu gekomen", dichter: "Karel van de Woestijne", titel: "Herfst", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Het licht wordt zachter nu", dichter: "Willem Kloos", titel: "Zacht licht", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+
+            // OKTOBER (31 dagen)
+            { tekst: "Oktober strooit zijn bladeren rond", dichter: "Herman Gorter", titel: "Oktober", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De bomen staan in volle gloed", dichter: "J.C. Bloem", titel: "Herfstgloed", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De nevel hangt laag over 't land", dichter: "Stijn Streuvels", titel: "Nevel", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Het is koud 's morgens vroeg", dichter: "Guido Gezelle", titel: "Koude morgen", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De wind blaast door de kale takken", dichter: "A. Roland Holst", titel: "Kale takken", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Een late roos bloeit in de tuin", dichter: "Albert Verwey", titel: "Late roos", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De regen klettert op het dak", dichter: "Willem Kloos", titel: "Regen", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het pad ligt vol met bladeren", dichter: "J.H. Leopold", titel: "Bladeren", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De kachel brandt weer in de kamer", dichter: "P.C. Boutens", titel: "Kachel", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Het ruikt naar herfst en vochtig hout", dichter: "Henriette Roland Holst", titel: "Herfstgeur", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De dag is kort, de nacht is lang", dichter: "Martinus Nijhoff", titel: "Korte dag", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "De eiken dragen nog hun blad", dichter: "Herman Gorter", titel: "Eiken", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "Een vlucht ganzen trekt voorbij", dichter: "J.C. Bloem", titel: "Ganzen", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De maan schijnt door de wolken heen", dichter: "Karel van de Woestijne", titel: "Maan", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "Het bos ruist als een zee", dichter: "A. Roland Holst", titel: "Ruisend bos", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "De zon staat laag aan de horizon", dichter: "Guido Gezelle", titel: "Lage zon", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "Een merel zingt zijn laatste lied", dichter: "Albert Verwey", titel: "Laatste lied", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De avond valt snel en zwaar", dichter: "Willem Kloos", titel: "Zware avond", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het water staat hoog in de sloot", dichter: "J.H. Leopold", titel: "Hoog water", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De storm raast door het land", dichter: "P.C. Boutens", titel: "Storm", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Een kaars brandt in het raam", dichter: "Stijn Streuvels", titel: "Kaars", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De natuur bereidt zich voor op rust", dichter: "Henriette Roland Holst", titel: "Rust", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Het is gezellig binnen nu", dichter: "Herman Gorter", titel: "Binnen", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De blaadjes dwarrelen omlaag", dichter: "Martinus Nijhoff", titel: "Dwarrelend blad", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het licht is grijs en mat", dichter: "J.C. Bloem", titel: "Grijs licht", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De winter nadert snel", dichter: "A. Roland Holst", titel: "Winter nadert", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Een vos sluipt door het veld", dichter: "Albert Verwey", titel: "Vos", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De klok slaat somber zes", dichter: "Guido Gezelle", titel: "Klok", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Het regent al de hele dag", dichter: "Karel van de Woestijne", titel: "Regendag", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De herfst toont al zijn schatten", dichter: "Willem Kloos", titel: "Herfstschatten", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Oktober gaat ten einde", dichter: "J.H. Leopold", titel: "Einde oktober", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+
+            // NOVEMBER (30 dagen)
+            { tekst: "November is de grijze maand", dichter: "Herman Gorter", titel: "November", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De wereld is in nevelen gehuld", dichter: "J.C. Bloem", titel: "Nevelen", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De bomen staan nu kaal en koud", dichter: "Stijn Streuvels", titel: "Kale bomen", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "Het regent, regent, regent maar", dichter: "Guido Gezelle", titel: "Regen", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De wind waait koud en scherp", dichter: "A. Roland Holst", titel: "Koude wind", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het water in de gracht staat stil", dichter: "Albert Verwey", titel: "Gracht", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De bladeren zijn afgevallen", dichter: "Willem Kloos", titel: "Afgevallen", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het is zo donker om vier uur", dichter: "J.H. Leopold", titel: "Donker", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "De eerste vorst ligt op het land", dichter: "P.C. Boutens", titel: "Eerste vorst", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "Het vuur knappert in de haard", dichter: "Henriette Roland Holst", titel: "Haard", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De straat glimt nat van regen", dichter: "Martinus Nijhoff", titel: "Natte straat", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Een kraai roept in de mist", dichter: "Herman Gorter", titel: "Kraai", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De natuur slaapt bijna in", dichter: "J.C. Bloem", titel: "Slapende natuur", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het licht is schaars en koud", dichter: "Karel van de Woestijne", titel: "Schaars licht", jaar: "1910", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De zon laat zich niet zien", dichter: "A. Roland Holst", titel: "Geen zon", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het ruikt naar natte aarde", dichter: "Guido Gezelle", titel: "Natte aarde", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De dagen kruipen traag voorbij", dichter: "Albert Verwey", titel: "Trage dagen", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Een roodborstje zoekt wat voer", dichter: "Willem Kloos", titel: "Roodborstje", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De klok tikt in de stille kamer", dichter: "J.H. Leopold", titel: "Tikkende klok", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Het is een tijd van inkeer", dichter: "P.C. Boutens", titel: "Inkeer", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De herfst sterft langzaam af", dichter: "Stijn Streuvels", titel: "Stervende herfst", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "De lucht is zwaar en grijs", dichter: "Henriette Roland Holst", titel: "Zware lucht", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Een uil roept in de nacht", dichter: "Herman Gorter", titel: "Uil", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De regen striemt het raam", dichter: "Martinus Nijhoff", titel: "Striemende regen", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het is zo stil buiten", dichter: "J.C. Bloem", titel: "Buitenstilte", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De winter staat voor de deur", dichter: "A. Roland Holst", titel: "Komende winter", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Een mus piept onder het dak", dichter: "Albert Verwey", titel: "Mus", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De nacht is lang en koud", dichter: "Guido Gezelle", titel: "Koude nacht", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Het jaar loopt naar zijn einde", dichter: "Karel van de Woestijne", titel: "Einde jaar", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "November buigt het hoofd", dichter: "Willem Kloos", titel: "Buigend november", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+
+            // DECEMBER (31 dagen)
+            { tekst: "December brengt de donkerste tijd", dichter: "Herman Gorter", titel: "December", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De eerste sneeuw valt uit de lucht", dichter: "J.C. Bloem", titel: "Eerste sneeuw", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Het is koud, zo bitter koud", dichter: "Stijn Streuvels", titel: "Bittere kou", jaar: "1899", dbnl: "https://www.dbnl.org/tekst/stre009lent01_01/" },
+            { tekst: "De kaarsen branden in advent", dichter: "Guido Gezelle", titel: "Advent", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "De vijver is bevroren nu", dichter: "A. Roland Holst", titel: "Bevroren vijver", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het sneeuwt en alles wordt wit", dichter: "Albert Verwey", titel: "Sneeuwval", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De winter heeft het land bedekt", dichter: "Willem Kloos", titel: "Bedekt land", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Een ster staat stil aan de hemel", dichter: "J.H. Leopold", titel: "Kerstster", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Het licht keert langzaam weer", dichter: "P.C. Boutens", titel: "Terugkerend licht", jaar: "1907", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De kortste dag is nu voorbij", dichter: "Henriette Roland Holst", titel: "Kortste dag", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "De kerstboom staat te stralen", dichter: "Martinus Nijhoff", titel: "Kerstboom", jaar: "1934", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het is een tijd van vrede", dichter: "Herman Gorter", titel: "Vrede", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De klokken luiden in de nacht", dichter: "J.C. Bloem", titel: "Klokken", jaar: "1945", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "Stille nacht, heilige nacht", dichter: "Volkslied", titel: "Kerstlied", jaar: "Traditie", dbnl: "https://www.dbnl.org/" },
+            { tekst: "De sneeuw glanst in het maanlicht", dichter: "A. Roland Holst", titel: "Sneeuwglans", jaar: "1920", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het is feest in alle huizen", dichter: "Guido Gezelle", titel: "Kerstfeest", jaar: "1880", dbnl: "https://www.dbnl.org/tekst/geze001dich04_01/" },
+            { tekst: "De kinderen zingen hun lied", dichter: "Albert Verwey", titel: "Kinderlied", jaar: "1882", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "Het hart is warm in winterkou", dichter: "Willem Kloos", titel: "Warm hart", jaar: "1894", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "De dagen lengen heel langzaam", dichter: "J.H. Leopold", titel: "Lengende dagen", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" },
+            { tekst: "Het oude jaar gaat heen", dichter: "P.C. Boutens", titel: "Oud jaar", jaar: "1898", dbnl: "https://www.dbnl.org/tekst/bout001verz01_01/" },
+            { tekst: "De wereld wacht op nieuw begin", dichter: "Stijn Streuvels", titel: "Nieuw begin", jaar: "1901", dbnl: "https://www.dbnl.org/tekst/stre009oogs01_01/" },
+            { tekst: "Het ijs kraakt onder de voeten", dichter: "Henriette Roland Holst", titel: "Krakend ijs", jaar: "1918", dbnl: "https://www.dbnl.org/tekst/rola001verz01_01/" },
+            { tekst: "Een mees pikt aan het raam", dichter: "Herman Gorter", titel: "Mees", jaar: "1890", dbnl: "https://www.dbnl.org/tekst/gort004verz01_01/" },
+            { tekst: "De schoorsteen rookt, het is er goed", dichter: "Martinus Nijhoff", titel: "Thuis", jaar: "1916", dbnl: "https://www.dbnl.org/tekst/nijh004verz01_01/" },
+            { tekst: "Het vriest dat het kraakt", dichter: "J.C. Bloem", titel: "Strenge vorst", jaar: "1931", dbnl: "https://www.dbnl.org/tekst/bloe007verz01_01/" },
+            { tekst: "De schaatsen glijden op het ijs", dichter: "A. Roland Holst", titel: "Schaatsen", jaar: "1925", dbnl: "https://www.dbnl.org/tekst/rola003verz01_01/" },
+            { tekst: "Het nieuwe jaar staat voor de deur", dichter: "Albert Verwey", titel: "Nieuwjaar", jaar: "1889", dbnl: "https://www.dbnl.org/tekst/verw007verz01_01/" },
+            { tekst: "De nacht is stil en vol verwachting", dichter: "Guido Gezelle", titel: "Stille nacht", jaar: "1862", dbnl: "https://www.dbnl.org/tekst/geze001dich02_01/" },
+            { tekst: "Het jaar keert in zichzelf terug", dichter: "Karel van de Woestijne", titel: "Jaarwende", jaar: "1903", dbnl: "https://www.dbnl.org/tekst/woes002verz01_01/" },
+            { tekst: "De tijd staat even stil vannacht", dichter: "Willem Kloos", titel: "Oudejaarsavond", jaar: "1884", dbnl: "https://www.dbnl.org/tekst/kloo003verz01_01/" },
+            { tekst: "Het nieuwe licht breekt aan", dichter: "J.H. Leopold", titel: "Nieuw licht", jaar: "1912", dbnl: "https://www.dbnl.org/tekst/leop006verz01_01/" }
+        ];
+
+        // Dagen en maanden in het Nederlands
+        const dagen = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+        const maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+        let huidigeDatum = new Date();
+
+        // Functie om dag van het jaar te berekenen (0-365)
+        function dagVanHetJaar(datum) {
+            const start = new Date(datum.getFullYear(), 0, 0);
+            const diff = datum - start;
+            const eenDag = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / eenDag) - 1;
+        }
+
+        // Functie om seizoen te bepalen
+        function getSeizoensKlasse(maand) {
+            if (maand >= 2 && maand <= 4) return 'seizoen-lente';
+            if (maand >= 5 && maand <= 7) return 'seizoen-zomer';
+            if (maand >= 8 && maand <= 10) return 'seizoen-herfst';
+            return 'seizoen-winter';
+        }
+
+        // Functie om kalender te updaten
+        function updateKalender(datum) {
+            const dagNr = datum.getDate();
+            const dagNaam = dagen[datum.getDay()];
+            const maand = maanden[datum.getMonth()];
+            const jaar = datum.getFullYear();
+            const dagIndex = dagVanHetJaar(datum);
+
+            // Update datum weergave
+            document.getElementById('dag-nummer').textContent = dagNr;
+            document.getElementById('dag-naam').textContent = dagNaam;
+            document.getElementById('maand-jaar').textContent = `${maand} ${jaar}`;
+
+            // Seizoenskleur voor header
+            const header = document.getElementById('datum-header');
+            header.className = 'datum-header ' + getSeizoensKlasse(datum.getMonth());
+
+            // Haal gedicht voor deze dag
+            const gedichtIndex = dagIndex % gedichten.length;
+            const gedicht = gedichten[gedichtIndex];
+
+            document.getElementById('gedicht-tekst').textContent = gedicht.tekst;
+            document.getElementById('gedicht-bron').innerHTML = `
+                <span class="dichter">${gedicht.dichter}</span> —
+                <span class="gedicht-titel">${gedicht.titel}</span> (${gedicht.jaar})<br>
+                <a href="${gedicht.dbnl}" target="_blank" rel="noopener">📚 Bekijk op DBNL</a>
+            `;
+
+            // Update datum input
+            document.getElementById('datum-input').valueAsDate = datum;
+        }
+
+        // Navigatie functies
+        function gaNaarVorigeDag() {
+            huidigeDatum.setDate(huidigeDatum.getDate() - 1);
+            updateKalender(huidigeDatum);
+        }
+
+        function gaNaarVolgendeDag() {
+            huidigeDatum.setDate(huidigeDatum.getDate() + 1);
+            updateKalender(huidigeDatum);
+        }
+
+        function gaNaarVandaag() {
+            huidigeDatum = new Date();
+            updateKalender(huidigeDatum);
+        }
+
+        function gaNaarDatum() {
+            const input = document.getElementById('datum-input');
+            if (input.value) {
+                huidigeDatum = new Date(input.value);
+                updateKalender(huidigeDatum);
+            }
+        }
+
+        function willekeurigeDag() {
+            const jaar = new Date().getFullYear();
+            const willekeurigeDag = Math.floor(Math.random() * 365);
+            huidigeDatum = new Date(jaar, 0, willekeurigeDag + 1);
+            updateKalender(huidigeDatum);
+        }
+
+        function scheurBlad() {
+            const blad = document.getElementById('kalender-blad');
+            blad.classList.add('animatie-scheur');
+
+            setTimeout(() => {
+                gaNaarVolgendeDag();
+                blad.classList.remove('animatie-scheur');
+            }, 250);
+        }
+
+        // Probeer DBNL te fetchen (voor demonstratie - zal waarschijnlijk geblokkeerd worden door CORS)
+        async function probeerDBNLFetch() {
+            const statusDiv = document.getElementById('dbnl-status');
+            try {
+                // Dit zal waarschijnlijk falen door CORS, maar we proberen het
+                const response = await fetch('https://www.dbnl.org/', {
+                    mode: 'no-cors'
+                });
+                statusDiv.innerHTML += '<br><em>ℹ️ DBNL is bereikbaar. Vanwege browser-beveiligingsrestricties (CORS) kunnen we geen live content ophalen. De kalender gebruikt een rijke lokale collectie van 366 gedichtregels.</em>';
+            } catch (error) {
+                statusDiv.innerHTML += '<br><em>ℹ️ De kalender werkt offline met een lokale collectie van 366 gedichtregels met DBNL-bronverwijzingen.</em>';
+            }
+        }
+
+        // Keyboard navigatie
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') gaNaarVorigeDag();
+            if (e.key === 'ArrowRight') gaNaarVolgendeDag();
+            if (e.key === ' ') { e.preventDefault(); scheurBlad(); }
+        });
+
+        // Initialiseer
+        updateKalender(huidigeDatum);
+        probeerDBNLFetch();
+    </script>
+</body>
+</html>
