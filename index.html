@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Den Pruimelaar</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -14,870 +16,506 @@
         }
 
         body {
-            font-family: 'Times New Roman', Times, serif;
-            background: #2b2b2b;
+            font-family: 'Libre Baskerville', Georgia, serif;
+            background: #3d3d3d;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            overflow: hidden;
         }
 
-        .kalender-houder {
+        .kalender-wrapper {
             position: relative;
-            width: 340px;
-            perspective: 1000px;
+            perspective: 1200px;
         }
 
-        /* De ophangbeugel */
-        .beugel {
-            width: 60px;
-            height: 20px;
-            background: linear-gradient(180deg, #8b7355 0%, #6b5344 100%);
-            border-radius: 3px 3px 0 0;
-            margin: 0 auto;
-            position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .beugel::before {
-            content: '';
+        /* Spijkers */
+        .spijker {
             position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 20px;
-            height: 10px;
-            background: #2b2b2b;
-            border-radius: 10px 10px 0 0;
+            top: -8px;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle at 30% 30%, #555, #111);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
         }
+        .spijker.links { left: 25px; }
+        .spijker.rechts { right: 25px; }
 
-        /* De stapel papier achter het huidige blad */
+        /* Papier stapel */
         .papier-stapel {
             position: absolute;
-            top: 0;
+            top: 8px;
             left: 50%;
             transform: translateX(-50%);
-            width: 320px;
-            height: 400px;
-            background: #f5f5dc;
-            border-radius: 0 0 4px 4px;
+            width: 296px;
+            height: 420px;
+            background: #f8f8f0;
             box-shadow:
-                2px 2px 0 #e8e8c8,
-                4px 4px 0 #dcdcbc,
-                6px 6px 0 #d0d0b0,
-                8px 8px 15px rgba(0,0,0,0.4);
+                1px 1px 0 #eee,
+                2px 2px 0 #e8e8e0,
+                3px 3px 0 #e0e0d8,
+                4px 4px 0 #d8d8d0,
+                5px 5px 0 #d0d0c8,
+                8px 8px 20px rgba(0,0,0,0.3);
         }
 
-        /* Het scheurbare blad */
+        /* Hoofdblad */
         .kalender-blad {
             position: relative;
-            width: 320px;
-            height: 400px;
-            margin: 0 auto;
-            background: #fffef5;
-            border-radius: 0 0 4px 4px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 300px;
+            height: 424px;
+            background: #fdfdf8;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
             cursor: grab;
             transform-origin: top center;
-            transition: none;
+            transition: transform 0.1s ease-out;
             z-index: 10;
-        }
-
-        .kalender-blad.terugveren {
-            transition: transform 0.3s ease-out;
         }
 
         .kalender-blad:active {
             cursor: grabbing;
         }
 
-        /* Perforatie bovenaan */
-        .perforatie {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 12px;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent 0px,
-                transparent 8px,
-                #fffef5 8px,
-                #fffef5 10px,
-                transparent 10px,
-                transparent 18px
-            );
-            border-bottom: 1px dashed #ccc;
+        .kalender-blad.terugveren {
+            transition: transform 0.3s ease-out;
         }
 
-        .perforatie::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 12px;
-            background: repeating-linear-gradient(
-                90deg,
-                #d4d4c4 0px,
-                #d4d4c4 8px,
-                transparent 8px,
-                transparent 18px
-            );
-        }
-
-        /* Rode banner bovenaan */
-        .datum-banner {
-            background: linear-gradient(180deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            padding: 15px 20px 12px;
-            margin-top: 12px;
-            text-align: center;
-            position: relative;
-        }
-
-        .dag-naam {
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            font-weight: normal;
-            margin-bottom: 2px;
-        }
-
-        .dag-nummer {
-            font-size: 5.5rem;
-            font-weight: bold;
-            line-height: 1;
-            font-family: 'Georgia', serif;
-        }
-
-        .maand-jaar {
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 2px;
-        }
-
-        /* Content sectie */
-        .inhoud {
-            padding: 20px 25px;
-            height: calc(100% - 180px);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .citaat {
-            font-size: 1.15rem;
-            line-height: 1.7;
-            color: #333;
-            text-align: center;
-            font-style: italic;
-            padding: 15px 10px;
-            position: relative;
-        }
-
-        .citaat::before,
-        .citaat::after {
-            font-size: 2.5rem;
-            color: #c41e3a;
-            font-style: normal;
-            line-height: 0;
-            position: relative;
-        }
-
-        .citaat::before {
-            content: '„';
-            margin-right: 5px;
-            top: 10px;
-        }
-
-        .citaat::after {
-            content: '"';
-            margin-left: 5px;
-            top: 10px;
-        }
-
-        .bron {
-            text-align: center;
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        .dichter {
-            font-weight: bold;
-            color: #444;
-        }
-
-        /* Footer met titel */
-        .kalender-footer {
-            border-top: 2px solid #c41e3a;
-            padding: 12px 20px;
-            text-align: center;
-            background: linear-gradient(180deg, #fffef5 0%, #f5f5e6 100%);
-            border-radius: 0 0 4px 4px;
-        }
-
-        .kalender-titel {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #8b0000;
-            letter-spacing: 2px;
-            font-variant: small-caps;
-        }
-
-        .kalender-subtitel {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 2px;
-            letter-spacing: 1px;
-        }
-
-        /* Scheur animatie */
         .kalender-blad.scheuren {
-            animation: scheurAf 0.6s ease-in forwards;
+            animation: scheurAf 0.5s ease-in forwards;
+            pointer-events: none;
         }
 
         @keyframes scheurAf {
-            0% {
-                transform: rotateX(0deg) translateY(0);
-                opacity: 1;
-            }
-            30% {
-                transform: rotateX(-40deg) translateY(-10px);
-            }
-            100% {
-                transform: rotateX(-120deg) translateY(100px) scale(0.8);
-                opacity: 0;
-            }
+            0% { transform: rotateX(0); opacity: 1; }
+            100% { transform: rotateX(-90deg) translateY(-50px); opacity: 0; }
         }
 
-        /* Hint tekst */
+        /* Blad inhoud */
+        .blad-inhoud {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px 15px;
+        }
+
+        /* Maand header */
+        .maand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .maand-naam {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .maand-info {
+            text-align: right;
+            font-size: 0.65rem;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        /* Week en zon info */
+        .week-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            padding: 4px 0;
+            border-bottom: 1px solid #ccc;
+            color: #444;
+        }
+
+        /* Grote datum */
+        .datum-groot {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .dag-nummer {
+            font-family: 'Playfair Display', serif;
+            font-size: 7rem;
+            font-weight: 900;
+            color: #c00;
+            line-height: 0.9;
+        }
+
+        .zondag .dag-nummer {
+            color: #c00;
+        }
+
+        /* Feestdag */
+        .feestdag {
+            text-align: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #333;
+            margin-top: 2px;
+        }
+
+        /* Dag naam */
+        .dag-naam {
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 5px 0;
+        }
+
+        /* Naamdagen */
+        .naamdagen {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #333;
+            padding: 5px 0;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            line-height: 1.5;
+        }
+
+        .naamdagen strong {
+            color: #000;
+        }
+
+        /* Citaat sectie */
+        .citaat-sectie {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px 5px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .citaat-tekst {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            text-align: center;
+            font-style: italic;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .citaat-bron {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+            font-variant: small-caps;
+            letter-spacing: 1px;
+        }
+
+        /* Weerspreuk */
+        .weerspreuk {
+            padding: 10px 5px 5px;
+            text-align: center;
+        }
+
+        .weerspreuk-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .weerspreuk-tekst {
+            font-size: 0.75rem;
+            font-style: italic;
+            color: #333;
+        }
+
+        /* Footer */
+        .kalender-footer {
+            text-align: center;
+            padding-top: 8px;
+            border-top: 2px solid #000;
+            margin-top: auto;
+        }
+
+        .kalender-titel {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Hint */
         .hint {
             position: absolute;
-            bottom: -40px;
+            bottom: -35px;
             left: 50%;
             transform: translateX(-50%);
-            color: #888;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            opacity: 0.8;
+            color: #999;
+            font-size: 0.75rem;
+            font-family: sans-serif;
         }
 
-        /* Volgend blad (preview) */
+        /* Volgend blad preview */
         .volgend-blad {
             position: absolute;
-            top: 0;
+            top: 8px;
             left: 50%;
             transform: translateX(-50%);
-            width: 320px;
-            height: 400px;
-            background: #fffef5;
-            border-radius: 0 0 4px 4px;
+            width: 296px;
+            height: 420px;
+            background: #fdfdf8;
             z-index: 5;
-            opacity: 0.95;
         }
 
-        /* Weeknummer indicator */
-        .week-nummer {
-            position: absolute;
-            top: 15px;
-            right: 8px;
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.7);
-            writing-mode: vertical-rl;
-        }
-
-        /* Naamdag */
-        .naamdag {
-            font-size: 0.8rem;
-            color: #c41e3a;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        @media (max-width: 380px) {
-            .kalender-houder { width: 300px; }
-            .kalender-blad, .papier-stapel, .volgend-blad { width: 280px; height: 370px; }
-            .dag-nummer { font-size: 4.5rem; }
-            .citaat { font-size: 1rem; }
+        @media (max-width: 340px) {
+            .kalender-blad { width: 280px; height: 400px; }
+            .papier-stapel, .volgend-blad { width: 276px; height: 396px; }
+            .dag-nummer { font-size: 6rem; }
         }
     </style>
 </head>
 <body>
-    <div class="kalender-houder">
-        <div class="beugel"></div>
+    <div class="kalender-wrapper">
+        <div class="spijker links"></div>
+        <div class="spijker rechts"></div>
         <div class="papier-stapel"></div>
         <div class="volgend-blad" id="volgend-blad"></div>
 
         <div class="kalender-blad" id="kalender-blad">
-            <div class="perforatie"></div>
-            <div class="datum-banner">
-                <div class="week-nummer" id="week-nummer">Week 1</div>
-                <div class="dag-naam" id="dag-naam">Woensdag</div>
-                <div class="dag-nummer" id="dag-nummer">1</div>
-                <div class="maand-jaar" id="maand-jaar">Januari 2025</div>
-            </div>
-            <div class="inhoud">
-                <div>
-                    <p class="citaat" id="citaat">Laden...</p>
-                    <p class="bron" id="bron"></p>
-                </div>
-                <div class="naamdag" id="naamdag"></div>
-            </div>
-            <div class="kalender-footer">
-                <div class="kalender-titel">Den Pruimelaar</div>
-                <div class="kalender-subtitel">Nederlandse Poëzie</div>
+            <div class="blad-inhoud" id="blad-inhoud">
+                <!-- Dynamisch gevuld -->
             </div>
         </div>
 
-        <div class="hint">↓ Sleep omlaag om af te scheuren</div>
+        <div class="hint">↓ sleep om af te scheuren</div>
     </div>
 
     <script>
         const gedichten = [
-            // JANUARI
-            { tekst: "Denkend aan Holland zie ik breede rivieren traag door oneindig laagland gaan", dichter: "H. Marsman", titel: "Herinnering aan Holland" },
-            { tekst: "Ik ben een God in 't diepst van mijn gedachten", dichter: "Willem Kloos", titel: "Sonnet" },
-            { tekst: "Egidius, waer bestu blansen? Mi lanct na di, gheselle mijn", dichter: "Anoniem", titel: "Egidius" },
-            { tekst: "Wat de toekomst brengen moge, mij geleidt des Heeren hand", dichter: "J.E. Voet", titel: "Wat de toekomst brengen moge" },
-            { tekst: "Een nieuwe lente en een nieuw geluid", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "Het regent en het is november", dichter: "M. Vasalis", titel: "Sotto Voce" },
-            { tekst: "Gij moet niet denken dat het mij niet deert", dichter: "Joost van den Vondel", titel: "Kinder-lyck" },
-            { tekst: "Waar de blanke top der duinen schittert in den zonneschijn", dichter: "H. Tollens", titel: "Kenau" },
-            { tekst: "De zee klotst voort in eindeloze deining", dichter: "J.H. Leopold", titel: "Oinou hena stalagmon" },
-            { tekst: "Mijn Vlaanderen, ik heb u hartelijk lief", dichter: "Guido Gezelle", titel: "Mijn Vlaanderen" },
-            { tekst: "Hoe zalig, als de jongenskiel de stroom doorsnijdt", dichter: "E.J. Potgieter", titel: "Holland" },
-            { tekst: "Natuur is voor tevredenen of legen", dichter: "J.C. Bloem", titel: "De Dapperstraat" },
-            { tekst: "Wien Neêrlands bloed door d'aadren vloeit", dichter: "H. Tollens", titel: "Wien Neêrlands bloed" },
-            { tekst: "Zooals daar ginds, aan stille blauwe zeeën", dichter: "Willem Kloos", titel: "Zooals daar ginds" },
-            { tekst: "De bomen dorren in het laat seizoen", dichter: "J.C. Bloem", titel: "November" },
-            { tekst: "Gij zijt de ruimte en de stilte, God", dichter: "Henriette Roland Holst", titel: "Gebed" },
-            { tekst: "Het was een oud klein stadje, waar ik ging", dichter: "Jan Prins", titel: "Het oude stadje" },
-            { tekst: "Nu is het stil aan alle stranden", dichter: "Albert Verwey", titel: "De terugkeer" },
-            { tekst: "Dien avond en die rooze", dichter: "Guido Gezelle", titel: "Dien avond en die rooze" },
-            { tekst: "Wees gegroet, gij eenzame!", dichter: "Herman Gorter", titel: "Verzen" },
-            { tekst: "O schoonste maan die aan de kimmen praalt", dichter: "Rhijnvis Feith", titel: "Het Graf" },
-            { tekst: "De taal is gans het volk", dichter: "Prudens van Duyse", titel: "De taal is gans het volk" },
-            { tekst: "Het licht wordt breed en breeder", dichter: "Pol de Mont", titel: "Mei" },
-            { tekst: "In het voorjaar komt het water tot aan mijn lippen", dichter: "P.N. van Eyck", titel: "Voorjaar" },
-            { tekst: "Stil, wees stil, want het heilige wordt geboren", dichter: "Henriette Roland Holst", titel: "Kerstnacht" },
-            { tekst: "Nauw zichtbaar wiegen op een rij", dichter: "J.H. Leopold", titel: "Nauw zichtbaar wiegen" },
-            { tekst: "O Nederland, let op uw saeck", dichter: "Joost van den Vondel", titel: "Op de jonghste Hollantsche Transformatie" },
-            { tekst: "De zachte krachten zullen zeker winnen", dichter: "Henriette Roland Holst", titel: "De zachte krachten" },
-            { tekst: "De avond komt zo langzaam aan", dichter: "P.C. Boutens", titel: "Avond" },
-            { tekst: "Hoe schoon, hoe vredig daalt de avond neder", dichter: "Jacob van Lennep", titel: "Avondstond" },
-            { tekst: "Winterkoude, wie kan 't verduren?", dichter: "Anoniem", titel: "Middelnederlands lied" },
-
-            // FEBRUARI
-            { tekst: "Het licht wordt langzaam aan wat langer aan", dichter: "Ida Gerhardt", titel: "Februari" },
-            { tekst: "Dit is de nacht die geen ontroering duldt", dichter: "Gerrit Achterberg", titel: "Ode aan Den Haag" },
-            { tekst: "De wind is uit den Westen", dichter: "Frederik van Eeden", titel: "Waterlelie" },
-            { tekst: "Er vaart een visscher over het veld", dichter: "Albert Verwey", titel: "De Visscher" },
-            { tekst: "Den uchtend loech al roosendal", dichter: "Hadewijch", titel: "Strofische Gedichten" },
-            { tekst: "Ik zie de moeder de vrouw op de rug van de schuit", dichter: "Martinus Nijhoff", titel: "De moeder de vrouw" },
-            { tekst: "De sneeuw zijgt over den vijver neer", dichter: "Karel van de Woestijne", titel: "Sneeuw" },
-            { tekst: "Mijn lief, mijn lief, mijn lief", dichter: "P.C. Hooft", titel: "Sonnet" },
-            { tekst: "En eeuwig slapen de grijze luchten", dichter: "Herman Gorter", titel: "Verzen" },
-            { tekst: "Want schoonheid, schoonheid is enkel pracht", dichter: "J.H. Leopold", titel: "Cheops" },
-            { tekst: "Mij heugt, hoe ik eens ten hemel zag", dichter: "Willem Kloos", titel: "Mij heugt" },
-            { tekst: "De geur van 't hooi trekt door de dreven", dichter: "René de Clercq", titel: "Oogst" },
-            { tekst: "O, kon ik dichten, dat gij leven zoudt", dichter: "Albert Verwey", titel: "Aan mijn gestorven kind" },
-            { tekst: "Wanneer de ziel een lied geworden is", dichter: "P.C. Boutens", titel: "Stemmen" },
-            { tekst: "Het lied der vogelen is verstorven", dichter: "Felix Timmermans", titel: "Herfst" },
-            { tekst: "Dit eiland, klein in het grenzenloos water", dichter: "Hendrik de Vries", titel: "Het eiland" },
-            { tekst: "Elk zingt zijn lied en dat is goed", dichter: "Jacques Perk", titel: "Iris" },
-            { tekst: "Ik wil de blanke wegen gaan", dichter: "Jan H. Eekhout", titel: "Wegen" },
-            { tekst: "Slaap zacht, mijn kindje, slaap maar in", dichter: "Nicolaas Beets", titel: "Wiegeliedje" },
-            { tekst: "Er is geen land waar ik gelukkiger ben", dichter: "A. Roland Holst", titel: "In memoriam" },
-            { tekst: "Ambrosia, wat vloeit mij aan?", dichter: "Jan Engelman", titel: "Vera Janacopoulos" },
-            { tekst: "Het vuur van uw woorden brandt mij na", dichter: "Geerten Gossaert", titel: "Bede" },
-            { tekst: "De nacht is kort, de dag is lang", dichter: "Jan van Nijlen", titel: "Nacht" },
-            { tekst: "Geluk is een schaduw die vliegt", dichter: "Guido Gezelle", titel: "Geluk" },
-            { tekst: "Ik zoek de zon en vind den nacht", dichter: "Herman Gorter", titel: "Verzen" },
-            { tekst: "Voorbij, voorbij, o en voorgoed voorbij", dichter: "J.C. Bloem", titel: "Voorbij" },
-            { tekst: "Een taal die door den tijd geen schade lijdt", dichter: "Joost van den Vondel", titel: "Aen de Nederduitsche Tael" },
-            { tekst: "Het was een teedre lenteavond", dichter: "Stijn Streuvels", titel: "Lenteweelde" },
-            { tekst: "De wolken drijven wit in 't zwerk", dichter: "Arthur van Schendel", titel: "Wolken" },
-
-            // MAART
-            { tekst: "Maart roert zijn staart en wekt de wereld", dichter: "Jacob Cats", titel: "Spreekwoorden" },
-            { tekst: "De lente komt, de wereld glimt", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "Het schrijverken, zoo men dat ziet", dichter: "Guido Gezelle", titel: "Het schrijverke" },
-            { tekst: "Een wit konijntje in het veld", dichter: "J.H. Leopold", titel: "Verzen" },
-            { tekst: "De merel fluit in het geboomt", dichter: "Emile Verhaeren", titel: "Les Blés" },
-            { tekst: "Hoor! 't Ruist in de boomen", dichter: "Frederik van Eeden", titel: "Het Lied van Schijn en Wezen" },
-            { tekst: "Wat blinkt daar hoog aan het hemelgewelf?", dichter: "Jacob van Maerlant", titel: "Der naturen bloeme" },
-            { tekst: "De gouden zee schijnt vuur te zijn", dichter: "A. Roland Holst", titel: "Zonsondergang" },
-            { tekst: "Mijn ziel is als een stille vijver", dichter: "Paul van Ostaijen", titel: "Music-hall" },
-            { tekst: "De vogel die op 't dak zijn liedje zingt", dichter: "Jan Luyken", titel: "Duytse Lier" },
-            { tekst: "Ik woon in een huisje gebouwd van gras", dichter: "Henriette Roland Holst", titel: "Het huisje" },
-            { tekst: "De bleeke maan gaat schuil in donkre wolken", dichter: "Albert Verwey", titel: "Maan" },
-            { tekst: "Hier onder het lage wolkendak", dichter: "Hendrik Marsman", titel: "Herinnering aan Holland" },
-            { tekst: "De wind zingt in de telephone", dichter: "Martinus Nijhoff", titel: "De soldaat die Jezus kruisigde" },
-            { tekst: "Wij gaan den goeden weg niet uit", dichter: "Jacob Revius", titel: "Uitvaert" },
-            { tekst: "De sterren blinken in de nacht", dichter: "P.C. Hooft", titel: "Nachtverzen" },
-            { tekst: "Het geluk zoekt ons als wij het niet zoeken", dichter: "Jacob Cats", titel: "Proteus" },
-            { tekst: "Een stem spreekt uit de diepten van de nacht", dichter: "Willem Kloos", titel: "Aan de Schoonheid" },
-            { tekst: "Ik wandelde langs de zee alleen", dichter: "Herman Gorter", titel: "Verzen" },
-            { tekst: "Nu het zonlicht door het gordijn valt", dichter: "J.C. Bloem", titel: "Zondagmorgen" },
-            { tekst: "Gij waart een lied, een droom, een zachte klacht", dichter: "Jacques Perk", titel: "Mathilde" },
-            { tekst: "De hemel is van staal", dichter: "Karel van de Woestijne", titel: "Laat" },
-            { tekst: "Wij zwommen samen in de zee", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "De velden druipen van het vocht", dichter: "Stijn Streuvels", titel: "De oogst" },
-            { tekst: "Elk woord is als een bloesemtak", dichter: "P.C. Boutens", titel: "Woorden" },
-            { tekst: "In 't najaar vallen de bladeren neer", dichter: "Guido Gezelle", titel: "Herfstlied" },
-            { tekst: "Een vogel slaat zijn vleugelen uit", dichter: "Albert Verwey", titel: "Vogel" },
-            { tekst: "Wat zijt gij, woorden, die ik spreek?", dichter: "J.H. Leopold", titel: "Verzen" },
-            { tekst: "Mijn hart is als een open boek", dichter: "Willem Kloos", titel: "Hart" },
-            { tekst: "De dagen lengen aan de einder", dichter: "A. Roland Holst", titel: "Lente" },
-            { tekst: "Een zacht geruis van water in de nacht", dichter: "Martinus Nijhoff", titel: "Water" },
-
-            // APRIL
-            { tekst: "April doet wat hij wil", dichter: "Volkswijsheid", titel: "Spreekwoord" },
-            { tekst: "De bijen zoemen in den hof", dichter: "Guido Gezelle", titel: "De bij" },
-            { tekst: "Het eerste groen ontluikt met macht", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "De wereld wacht, de wereld wordt herboren", dichter: "Frederik van Eeden", titel: "Paasmorgen" },
-            { tekst: "Een kind speelt aan het strand", dichter: "J.C. Bloem", titel: "Kind" },
-            { tekst: "Het water kabbelt langs de wal", dichter: "Albert Verwey", titel: "Aan de waterkant" },
-            { tekst: "In 't westen kleurt de kim zich rood", dichter: "Henriette Roland Holst", titel: "Avond" },
-            { tekst: "De schoonheid der natuur ligt ons te wachten", dichter: "P.C. Boutens", titel: "Natuur" },
-            { tekst: "Een witte vlinder dwaalt door 't zonlicht", dichter: "Jacques Perk", titel: "Vlinder" },
-            { tekst: "Het is goed in de stilte te verwijlen", dichter: "J.H. Leopold", titel: "Stilte" },
-            { tekst: "Wij waren kinderen, lang geleên", dichter: "Willem Kloos", titel: "Kinderen" },
-            { tekst: "De wolken drijven door de lucht", dichter: "Martinus Nijhoff", titel: "Wolken" },
-            { tekst: "Een koeltje waait door 't open raam", dichter: "Herman Gorter", titel: "Verzen" },
-            { tekst: "De appelboom staat wit in bloei", dichter: "A. Roland Holst", titel: "Bloesem" },
-            { tekst: "Het lied der merels klinkt zo zoet", dichter: "Guido Gezelle", titel: "Merel" },
-            { tekst: "De beken murmelen zacht voorbij", dichter: "Stijn Streuvels", titel: "Beek" },
-            { tekst: "Ik zag een zwaluw in de lucht", dichter: "J.C. Bloem", titel: "Zwaluw" },
-            { tekst: "De geur van seringen waait door het raam", dichter: "Albert Verwey", titel: "Seringen" },
-            { tekst: "Lente, gij zijt gekomen", dichter: "P.C. Hooft", titel: "Lentezang" },
-            { tekst: "Het zonlicht speelt over het water", dichter: "Karel van de Woestijne", titel: "Water" },
-            { tekst: "De kinderen spelen in de wei", dichter: "Henriette Roland Holst", titel: "Kinderen" },
-            { tekst: "Een zacht geritsel in het gras", dichter: "J.H. Leopold", titel: "Geritsel" },
-            { tekst: "De dag breekt aan met stil geheim", dichter: "P.C. Boutens", titel: "Dageraad" },
-            { tekst: "Ik sta aan het open venster", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "De avond valt met zachte hand", dichter: "Willem Kloos", titel: "Avond" },
-            { tekst: "Een leeuwerik stijgt naar de hemel", dichter: "Guido Gezelle", titel: "Leeuwerik" },
-            { tekst: "De nacht is vol geheimen", dichter: "Martinus Nijhoff", titel: "Nacht" },
-            { tekst: "Ik hoor de wind door 't lover gaan", dichter: "A. Roland Holst", titel: "Wind" },
-            { tekst: "De zon zakt langzaam in het west", dichter: "J.C. Bloem", titel: "Zonsondergang" },
-            { tekst: "Het wordt al lichter aan de kim", dichter: "Albert Verwey", titel: "Schemering" },
-
-            // MEI
-            { tekst: "Een nieuwe lente en een nieuw geluid", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "De meidoorn bloeit, de brem staat geel", dichter: "Guido Gezelle", titel: "Mei" },
-            { tekst: "Mei is de mooiste maand van 't jaar", dichter: "Stijn Streuvels", titel: "Mei" },
-            { tekst: "De koekoek roept van verre", dichter: "J.C. Bloem", titel: "Koekoek" },
-            { tekst: "Het gras staat hoog, de wei is groen", dichter: "A. Roland Holst", titel: "Weide" },
-            { tekst: "De vogels zingen in de hagen", dichter: "Willem Kloos", titel: "Mei" },
-            { tekst: "Een zoele wind waait door de bomen", dichter: "Albert Verwey", titel: "Wind" },
-            { tekst: "De nachtegaal zingt in de nacht", dichter: "J.H. Leopold", titel: "Nachtegaal" },
-            { tekst: "Langs de wegen bloeit de haag", dichter: "P.C. Boutens", titel: "Hagedoorn" },
-            { tekst: "De rozen bloeien in de tuin", dichter: "Henriette Roland Holst", titel: "Rozen" },
-            { tekst: "De zon staat hoog, de dag is lang", dichter: "Herman Gorter", titel: "Mei" },
-            { tekst: "Een vlinder dwarrelt door de tuin", dichter: "Jacques Perk", titel: "Vlinder" },
-            { tekst: "De bloemen geuren in de nacht", dichter: "Martinus Nijhoff", titel: "Bloemen" },
-            { tekst: "Het water glimt in 't zonnelicht", dichter: "Karel van de Woestijne", titel: "Glinster" },
-            { tekst: "De bijen gonzen om de bloem", dichter: "Guido Gezelle", titel: "Bijen" },
-            { tekst: "Een bootje dobbert op de stroom", dichter: "J.C. Bloem", titel: "Bootje" },
-            { tekst: "De wereld is zo mooi in mei", dichter: "A. Roland Holst", titel: "Mei" },
-            { tekst: "Het veld staat vol met boterbloemen", dichter: "Albert Verwey", titel: "Boterbloem" },
-            { tekst: "De lucht is blauw en zonder wolken", dichter: "Willem Kloos", titel: "Lucht" },
-            { tekst: "Een spreeuw zit op de kerktoren", dichter: "Stijn Streuvels", titel: "Spreeuw" },
-            { tekst: "De dag is warm, de avond koel", dichter: "J.H. Leopold", titel: "Avond" },
-            { tekst: "Het lieveheersbeestje kruipt langs 't blad", dichter: "P.C. Boutens", titel: "Insect" },
-            { tekst: "De sloot weerspiegelt blauwe lucht", dichter: "Herman Gorter", titel: "Sloot" },
-            { tekst: "Een regenboog verschijnt na 't onweer", dichter: "Henriette Roland Holst", titel: "Regenboog" },
-            { tekst: "De weilanden zijn overal", dichter: "Martinus Nijhoff", titel: "Holland" },
-            { tekst: "Het ruischt zacht in het lover", dichter: "Guido Gezelle", titel: "Lover" },
-            { tekst: "De maan komt op boven het water", dichter: "J.C. Bloem", titel: "Maan" },
-            { tekst: "Een eend zwemt rustig op de vaart", dichter: "A. Roland Holst", titel: "Eend" },
-            { tekst: "De abeel ruischt in de wind", dichter: "Albert Verwey", titel: "Abeel" },
-            { tekst: "Het zonlicht dringt door 't gebladert", dichter: "Karel van de Woestijne", titel: "Zonlicht" },
-            { tekst: "De mei is zoet, de mei is licht", dichter: "Willem Kloos", titel: "Mei" },
-
-            // JUNI
-            { tekst: "De zomer komt met zonnegloed", dichter: "Herman Gorter", titel: "Zomer" },
-            { tekst: "De langste dag staat voor de deur", dichter: "J.C. Bloem", titel: "Zomerzonnewende" },
-            { tekst: "Het koren groeit en wordt al geel", dichter: "Stijn Streuvels", titel: "Koren" },
-            { tekst: "De roos ontplooit haar rode kelk", dichter: "Guido Gezelle", titel: "Roos" },
-            { tekst: "Een warm gezoem van bijen", dichter: "A. Roland Holst", titel: "Bijen" },
-            { tekst: "De avonden zijn lang en zacht", dichter: "Albert Verwey", titel: "Juni-avond" },
-            { tekst: "Het hooi geurt over 't veld", dichter: "Willem Kloos", titel: "Hooitijd" },
-            { tekst: "De schemering komt traag en stil", dichter: "J.H. Leopold", titel: "Schemer" },
-            { tekst: "Een lelie staat blank in de vijver", dichter: "P.C. Boutens", titel: "Lelie" },
-            { tekst: "De klaproos wuift langs de akker", dichter: "Henriette Roland Holst", titel: "Klaproos" },
-            { tekst: "Het zonlicht straalt op dak en gevel", dichter: "Martinus Nijhoff", titel: "Zomer" },
-            { tekst: "De krekel sjirpt in 't hooge gras", dichter: "Herman Gorter", titel: "Krekel" },
-            { tekst: "Een kikker kwaakt bij de vaart", dichter: "J.C. Bloem", titel: "Kikker" },
-            { tekst: "De berk fluistert met zilveren bladeren", dichter: "Karel van de Woestijne", titel: "Berk" },
-            { tekst: "Het water is zo kalm en stil", dichter: "A. Roland Holst", titel: "Stil water" },
-            { tekst: "De duiven koeren op het dak", dichter: "Guido Gezelle", titel: "Duiven" },
-            { tekst: "Een libel danst boven de plas", dichter: "Albert Verwey", titel: "Libel" },
-            { tekst: "De zomer is op zijn mooist", dichter: "Willem Kloos", titel: "Zomer" },
-            { tekst: "Het licht valt door de bomen", dichter: "J.H. Leopold", titel: "Licht" },
-            { tekst: "De geur van jasmijn drijft voorbij", dichter: "P.C. Boutens", titel: "Jasmijn" },
-            { tekst: "Een vlieg zoemt in de kamer", dichter: "Stijn Streuvels", titel: "Vlieg" },
-            { tekst: "De schaduwen worden langer", dichter: "Henriette Roland Holst", titel: "Schaduw" },
-            { tekst: "Het ruikt naar zomer overal", dichter: "Herman Gorter", titel: "Zomergeur" },
-            { tekst: "De zon schijnt fel op 't witte zand", dichter: "Martinus Nijhoff", titel: "Strand" },
-            { tekst: "Een haas springt door het veld", dichter: "J.C. Bloem", titel: "Haas" },
-            { tekst: "De lucht is zwaar van onweer", dichter: "A. Roland Holst", titel: "Onweer" },
-            { tekst: "De dag is heet, de nacht is koel", dichter: "Albert Verwey", titel: "Zomernacht" },
-            { tekst: "Het graan staat rijp en goud", dichter: "Guido Gezelle", titel: "Graan" },
-            { tekst: "De maan is vol en blank", dichter: "Karel van de Woestijne", titel: "Volle maan" },
-            { tekst: "Een ster verschijnt aan de hemel", dichter: "Willem Kloos", titel: "Avondster" },
-
-            // JULI
-            { tekst: "De zomer is in volle gang", dichter: "Herman Gorter", titel: "Hartje zomer" },
-            { tekst: "Het zonlicht brandt op 't hete land", dichter: "J.C. Bloem", titel: "Hitte" },
-            { tekst: "De korenvelden golven goud", dichter: "Stijn Streuvels", titel: "Oogst" },
-            { tekst: "Een zwerm spreeuwen vliegt voorbij", dichter: "Guido Gezelle", titel: "Spreeuwen" },
-            { tekst: "De lucht trilt boven het veld", dichter: "A. Roland Holst", titel: "Hittegolf" },
-            { tekst: "Het water lokt met koele hand", dichter: "Albert Verwey", titel: "Zwemmen" },
-            { tekst: "De muggen dansen in de lucht", dichter: "Willem Kloos", titel: "Muggen" },
-            { tekst: "Een zacht briesje brengt verkoeling", dichter: "J.H. Leopold", titel: "Bries" },
-            { tekst: "De zwaluw schiet door de lucht", dichter: "P.C. Boutens", titel: "Zwaluw" },
-            { tekst: "Het fruit rijpt aan de boom", dichter: "Henriette Roland Holst", titel: "Fruit" },
-            { tekst: "De hemel is van diep azuur", dichter: "Martinus Nijhoff", titel: "Zomerhemel" },
-            { tekst: "De cicade zingt haar lied", dichter: "Herman Gorter", titel: "Cicade" },
-            { tekst: "Een slak kruipt langzaam over 't pad", dichter: "J.C. Bloem", titel: "Slak" },
-            { tekst: "De rozen staan in volle bloei", dichter: "Karel van de Woestijne", titel: "Rozen" },
-            { tekst: "Het is zo stil in 't middaguur", dichter: "A. Roland Holst", titel: "Middagrust" },
-            { tekst: "De hommel zoemt van bloem tot bloem", dichter: "Guido Gezelle", titel: "Hommel" },
-            { tekst: "Een spin weeft haar web in de hoek", dichter: "Albert Verwey", titel: "Spin" },
-            { tekst: "De dag lijkt eindeloos te duren", dichter: "Willem Kloos", titel: "Lange dag" },
-            { tekst: "Het gras is droog en geel", dichter: "J.H. Leopold", titel: "Droogte" },
-            { tekst: "Een pad hopt door de tuin", dichter: "P.C. Boutens", titel: "Pad" },
-            { tekst: "De bessen kleuren aan de struik", dichter: "Stijn Streuvels", titel: "Bessen" },
-            { tekst: "Het onweer rommelt in de verte", dichter: "Henriette Roland Holst", titel: "Onweer" },
-            { tekst: "De regenbui brengt lafenis", dichter: "Herman Gorter", titel: "Regenbui" },
-            { tekst: "Het ruikt naar nat gras en aarde", dichter: "Martinus Nijhoff", titel: "Na de regen" },
-            { tekst: "De zon breekt weer door de wolken", dichter: "J.C. Bloem", titel: "Opklaring" },
-            { tekst: "Een reiger staat stil aan de plas", dichter: "A. Roland Holst", titel: "Reiger" },
-            { tekst: "De schapen grazen in de wei", dichter: "Albert Verwey", titel: "Schapen" },
-            { tekst: "Het koren wuift in de wind", dichter: "Guido Gezelle", titel: "Korenveld" },
-            { tekst: "De nacht is warm en zwoel", dichter: "Karel van de Woestijne", titel: "Zomernacht" },
-            { tekst: "De sterren fonkelen helder", dichter: "Willem Kloos", titel: "Sterren" },
-            { tekst: "Het is vakantie, zoete tijd", dichter: "J.H. Leopold", titel: "Vakantie" },
-
-            // AUGUSTUS
-            { tekst: "De zomer helt al naar het eind", dichter: "Herman Gorter", titel: "Nazomer" },
-            { tekst: "Het koren valt onder de zeis", dichter: "Stijn Streuvels", titel: "Oogst" },
-            { tekst: "De appels kleuren aan de tak", dichter: "Guido Gezelle", titel: "Appels" },
-            { tekst: "De dagen worden korter nu", dichter: "J.C. Bloem", titel: "Augustus" },
-            { tekst: "De velden geuren naar het hooi", dichter: "A. Roland Holst", titel: "Hooitijd" },
-            { tekst: "Een zwerm bijen zoemt voorbij", dichter: "Albert Verwey", titel: "Bijenzwerm" },
-            { tekst: "Het is zo stil in augustus", dichter: "Willem Kloos", titel: "Augustus" },
-            { tekst: "De pruimen hangen zwaar aan 't hout", dichter: "J.H. Leopold", titel: "Pruimen" },
-            { tekst: "Het water glanst in 't avondlicht", dichter: "P.C. Boutens", titel: "Avondglans" },
-            { tekst: "De zwaluwen verzamelen zich", dichter: "Henriette Roland Holst", titel: "Zwaluwen" },
-            { tekst: "De boer rijdt 't hooi naar de schuur", dichter: "Martinus Nijhoff", titel: "Boerderij" },
-            { tekst: "Het licht wordt goudkleuriger nu", dichter: "Herman Gorter", titel: "Augustuslicht" },
-            { tekst: "De bramen rijpen aan de haag", dichter: "J.C. Bloem", titel: "Bramen" },
-            { tekst: "Een wolk drijft langzaam voorbij", dichter: "Karel van de Woestijne", titel: "Wolk" },
-            { tekst: "De avonden koelen merkbaar af", dichter: "A. Roland Holst", titel: "Koele avond" },
-            { tekst: "Het veld staat vol met korenschoven", dichter: "Guido Gezelle", titel: "Schoven" },
-            { tekst: "De dauw ligt 's morgens op het gras", dichter: "Albert Verwey", titel: "Dauw" },
-            { tekst: "Het is de tijd van overvloed", dichter: "Willem Kloos", titel: "Overvloed" },
-            { tekst: "De peren hangen geel aan 't hout", dichter: "J.H. Leopold", titel: "Peren" },
-            { tekst: "Een vlinder rust op de bloem", dichter: "P.C. Boutens", titel: "Rustende vlinder" },
-            { tekst: "De zon zakt vroeger dan voorheen", dichter: "Stijn Streuvels", titel: "Zonsondergang" },
-            { tekst: "Het ruikt naar rijpe vruchten", dichter: "Henriette Roland Holst", titel: "Vruchten" },
-            { tekst: "De lucht kleurt oranje en rood", dichter: "Herman Gorter", titel: "Avondlucht" },
-            { tekst: "Een egel scharrelt door de tuin", dichter: "Martinus Nijhoff", titel: "Egel" },
-            { tekst: "De school begint weer bijna", dichter: "J.C. Bloem", titel: "Einde vakantie" },
-            { tekst: "Het eerste blad valt van de boom", dichter: "A. Roland Holst", titel: "Eerste blad" },
-            { tekst: "De druiven kleuren aan de rank", dichter: "Albert Verwey", titel: "Druiven" },
-            { tekst: "Het is nog warm maar anders warm", dichter: "Guido Gezelle", titel: "Nazomerwarmte" },
-            { tekst: "De hemel is zo hoog en blauw", dichter: "Karel van de Woestijne", titel: "Augustushemel" },
-            { tekst: "Een wesp zoemt om de pruimenboom", dichter: "Willem Kloos", titel: "Wesp" },
-            { tekst: "De zomer neemt langzaam afscheid", dichter: "J.H. Leopold", titel: "Afscheid" },
-
-            // SEPTEMBER
-            { tekst: "September brengt de herfst nabij", dichter: "Herman Gorter", titel: "September" },
-            { tekst: "De bladeren kleuren geel en rood", dichter: "J.C. Bloem", titel: "Herfstkleuren" },
-            { tekst: "Het is de tijd van oogsten", dichter: "Stijn Streuvels", titel: "Oogsttijd" },
-            { tekst: "De spin weeft draden in de dauw", dichter: "Guido Gezelle", titel: "Spinnenweb" },
-            { tekst: "De morgens zijn nu fris en koel", dichter: "A. Roland Holst", titel: "Septembermorgen" },
-            { tekst: "Het licht valt schuiner door het raam", dichter: "Albert Verwey", titel: "Herfstlicht" },
-            { tekst: "De ganzen trekken naar het zuid", dichter: "Willem Kloos", titel: "Trekvogels" },
-            { tekst: "Een rijpe appel valt van de boom", dichter: "J.H. Leopold", titel: "Vallende appel" },
-            { tekst: "De lucht ruikt naar gevallen blad", dichter: "P.C. Boutens", titel: "Herfstgeur" },
-            { tekst: "De zwaluwen vertrekken nu", dichter: "Henriette Roland Holst", titel: "Vertrek" },
-            { tekst: "Het veld ligt kaal na de oogst", dichter: "Martinus Nijhoff", titel: "Na de oogst" },
-            { tekst: "De nevel hangt boven de wei", dichter: "Herman Gorter", titel: "Ochtendnevel" },
-            { tekst: "Een herfstaster bloeit nog voort", dichter: "J.C. Bloem", titel: "Aster" },
-            { tekst: "De avond valt al vroeg", dichter: "Karel van de Woestijne", titel: "Vroege avond" },
-            { tekst: "Het fruit wordt binnengehaald", dichter: "A. Roland Holst", titel: "Fruitoogst" },
-            { tekst: "De kastanjes vallen uit de bolster", dichter: "Guido Gezelle", titel: "Kastanjes" },
-            { tekst: "Een eekhoorn zoekt zijn wintervoorraad", dichter: "Albert Verwey", titel: "Eekhoorn" },
-            { tekst: "De dagen zijn gelijk de nachten", dichter: "Willem Kloos", titel: "Evennachten" },
-            { tekst: "Het ruist in 't vergelend lover", dichter: "J.H. Leopold", titel: "Vergelend lover" },
-            { tekst: "De mist trekt op uit het dal", dichter: "P.C. Boutens", titel: "Mist" },
-            { tekst: "De dahlia's staan prachtig in bloei", dichter: "Stijn Streuvels", titel: "Dahlia's" },
-            { tekst: "Het is zo stil in de natuur", dichter: "Henriette Roland Holst", titel: "Stilte" },
-            { tekst: "De wolken jagen door de lucht", dichter: "Herman Gorter", titel: "Najaarswolken" },
-            { tekst: "Een paddenstoel staat in het bos", dichter: "Martinus Nijhoff", titel: "Paddenstoel" },
-            { tekst: "De wind rukt aan de bomen", dichter: "J.C. Bloem", titel: "Najaarswind" },
-            { tekst: "Het water kleurt als lood", dichter: "A. Roland Holst", titel: "Loodkleurig water" },
-            { tekst: "De zomer is voorbij gegaan", dichter: "Albert Verwey", titel: "Voorbij" },
-            { tekst: "Een kraai vliegt krijsend over", dichter: "Guido Gezelle", titel: "Kraai" },
-            { tekst: "De herfst is nu gekomen", dichter: "Karel van de Woestijne", titel: "Herfst" },
-            { tekst: "Het licht wordt zachter nu", dichter: "Willem Kloos", titel: "Zacht licht" },
-
-            // OKTOBER
-            { tekst: "Oktober strooit zijn bladeren rond", dichter: "Herman Gorter", titel: "Oktober" },
-            { tekst: "De bomen staan in volle gloed", dichter: "J.C. Bloem", titel: "Herfstgloed" },
-            { tekst: "De nevel hangt laag over 't land", dichter: "Stijn Streuvels", titel: "Nevel" },
-            { tekst: "Het is koud 's morgens vroeg", dichter: "Guido Gezelle", titel: "Koude morgen" },
-            { tekst: "De wind blaast door de kale takken", dichter: "A. Roland Holst", titel: "Kale takken" },
-            { tekst: "Een late roos bloeit in de tuin", dichter: "Albert Verwey", titel: "Late roos" },
-            { tekst: "De regen klettert op het dak", dichter: "Willem Kloos", titel: "Regen" },
-            { tekst: "Het pad ligt vol met bladeren", dichter: "J.H. Leopold", titel: "Bladeren" },
-            { tekst: "De kachel brandt weer in de kamer", dichter: "P.C. Boutens", titel: "Kachel" },
-            { tekst: "Het ruikt naar herfst en vochtig hout", dichter: "Henriette Roland Holst", titel: "Herfstgeur" },
-            { tekst: "De dag is kort, de nacht is lang", dichter: "Martinus Nijhoff", titel: "Korte dag" },
-            { tekst: "De eiken dragen nog hun blad", dichter: "Herman Gorter", titel: "Eiken" },
-            { tekst: "Een vlucht ganzen trekt voorbij", dichter: "J.C. Bloem", titel: "Ganzen" },
-            { tekst: "De maan schijnt door de wolken heen", dichter: "Karel van de Woestijne", titel: "Maan" },
-            { tekst: "Het bos ruist als een zee", dichter: "A. Roland Holst", titel: "Ruisend bos" },
-            { tekst: "De zon staat laag aan de horizon", dichter: "Guido Gezelle", titel: "Lage zon" },
-            { tekst: "Een merel zingt zijn laatste lied", dichter: "Albert Verwey", titel: "Laatste lied" },
-            { tekst: "De avond valt snel en zwaar", dichter: "Willem Kloos", titel: "Zware avond" },
-            { tekst: "Het water staat hoog in de sloot", dichter: "J.H. Leopold", titel: "Hoog water" },
-            { tekst: "De storm raast door het land", dichter: "P.C. Boutens", titel: "Storm" },
-            { tekst: "Een kaars brandt in het raam", dichter: "Stijn Streuvels", titel: "Kaars" },
-            { tekst: "De natuur bereidt zich voor op rust", dichter: "Henriette Roland Holst", titel: "Rust" },
-            { tekst: "Het is gezellig binnen nu", dichter: "Herman Gorter", titel: "Binnen" },
-            { tekst: "De blaadjes dwarrelen omlaag", dichter: "Martinus Nijhoff", titel: "Dwarrelend blad" },
-            { tekst: "Het licht is grijs en mat", dichter: "J.C. Bloem", titel: "Grijs licht" },
-            { tekst: "De winter nadert snel", dichter: "A. Roland Holst", titel: "Winter nadert" },
-            { tekst: "Een vos sluipt door het veld", dichter: "Albert Verwey", titel: "Vos" },
-            { tekst: "De klok slaat somber zes", dichter: "Guido Gezelle", titel: "Klok" },
-            { tekst: "Het regent al de hele dag", dichter: "Karel van de Woestijne", titel: "Regendag" },
-            { tekst: "De herfst toont al zijn schatten", dichter: "Willem Kloos", titel: "Herfstschatten" },
-            { tekst: "Oktober gaat ten einde", dichter: "J.H. Leopold", titel: "Einde oktober" },
-
-            // NOVEMBER
-            { tekst: "November is de grijze maand", dichter: "Herman Gorter", titel: "November" },
-            { tekst: "De wereld is in nevelen gehuld", dichter: "J.C. Bloem", titel: "Nevelen" },
-            { tekst: "De bomen staan nu kaal en koud", dichter: "Stijn Streuvels", titel: "Kale bomen" },
-            { tekst: "Het regent, regent, regent maar", dichter: "Guido Gezelle", titel: "Regen" },
-            { tekst: "De wind waait koud en scherp", dichter: "A. Roland Holst", titel: "Koude wind" },
-            { tekst: "Het water in de gracht staat stil", dichter: "Albert Verwey", titel: "Gracht" },
-            { tekst: "De bladeren zijn afgevallen", dichter: "Willem Kloos", titel: "Afgevallen" },
-            { tekst: "Het is zo donker om vier uur", dichter: "J.H. Leopold", titel: "Donker" },
-            { tekst: "De eerste vorst ligt op het land", dichter: "P.C. Boutens", titel: "Eerste vorst" },
-            { tekst: "Het vuur knappert in de haard", dichter: "Henriette Roland Holst", titel: "Haard" },
-            { tekst: "De straat glimt nat van regen", dichter: "Martinus Nijhoff", titel: "Natte straat" },
-            { tekst: "Een kraai roept in de mist", dichter: "Herman Gorter", titel: "Kraai" },
-            { tekst: "De natuur slaapt bijna in", dichter: "J.C. Bloem", titel: "Slapende natuur" },
-            { tekst: "Het licht is schaars en koud", dichter: "Karel van de Woestijne", titel: "Schaars licht" },
-            { tekst: "De zon laat zich niet zien", dichter: "A. Roland Holst", titel: "Geen zon" },
-            { tekst: "Het ruikt naar natte aarde", dichter: "Guido Gezelle", titel: "Natte aarde" },
-            { tekst: "De dagen kruipen traag voorbij", dichter: "Albert Verwey", titel: "Trage dagen" },
-            { tekst: "Een roodborstje zoekt wat voer", dichter: "Willem Kloos", titel: "Roodborstje" },
-            { tekst: "De klok tikt in de stille kamer", dichter: "J.H. Leopold", titel: "Tikkende klok" },
-            { tekst: "Het is een tijd van inkeer", dichter: "P.C. Boutens", titel: "Inkeer" },
-            { tekst: "De herfst sterft langzaam af", dichter: "Stijn Streuvels", titel: "Stervende herfst" },
-            { tekst: "De lucht is zwaar en grijs", dichter: "Henriette Roland Holst", titel: "Zware lucht" },
-            { tekst: "Een uil roept in de nacht", dichter: "Herman Gorter", titel: "Uil" },
-            { tekst: "De regen striemt het raam", dichter: "Martinus Nijhoff", titel: "Striemende regen" },
-            { tekst: "Het is zo stil buiten", dichter: "J.C. Bloem", titel: "Buitenstilte" },
-            { tekst: "De winter staat voor de deur", dichter: "A. Roland Holst", titel: "Komende winter" },
-            { tekst: "Een mus piept onder het dak", dichter: "Albert Verwey", titel: "Mus" },
-            { tekst: "De nacht is lang en koud", dichter: "Guido Gezelle", titel: "Koude nacht" },
-            { tekst: "Het jaar loopt naar zijn einde", dichter: "Karel van de Woestijne", titel: "Einde jaar" },
-            { tekst: "November buigt het hoofd", dichter: "Willem Kloos", titel: "Buigend november" },
-
-            // DECEMBER
-            { tekst: "December brengt de donkerste tijd", dichter: "Herman Gorter", titel: "December" },
-            { tekst: "De eerste sneeuw valt uit de lucht", dichter: "J.C. Bloem", titel: "Eerste sneeuw" },
-            { tekst: "Het is koud, zo bitter koud", dichter: "Stijn Streuvels", titel: "Bittere kou" },
-            { tekst: "De kaarsen branden in advent", dichter: "Guido Gezelle", titel: "Advent" },
-            { tekst: "De vijver is bevroren nu", dichter: "A. Roland Holst", titel: "Bevroren vijver" },
-            { tekst: "Het sneeuwt en alles wordt wit", dichter: "Albert Verwey", titel: "Sneeuwval" },
-            { tekst: "De winter heeft het land bedekt", dichter: "Willem Kloos", titel: "Bedekt land" },
-            { tekst: "Een ster staat stil aan de hemel", dichter: "J.H. Leopold", titel: "Kerstster" },
-            { tekst: "Het licht keert langzaam weer", dichter: "P.C. Boutens", titel: "Terugkerend licht" },
-            { tekst: "De kortste dag is nu voorbij", dichter: "Henriette Roland Holst", titel: "Kortste dag" },
-            { tekst: "De kerstboom staat te stralen", dichter: "Martinus Nijhoff", titel: "Kerstboom" },
-            { tekst: "Het is een tijd van vrede", dichter: "Herman Gorter", titel: "Vrede" },
-            { tekst: "De klokken luiden in de nacht", dichter: "J.C. Bloem", titel: "Klokken" },
-            { tekst: "Stille nacht, heilige nacht", dichter: "Volkslied", titel: "Kerstlied" },
-            { tekst: "De sneeuw glanst in het maanlicht", dichter: "A. Roland Holst", titel: "Sneeuwglans" },
-            { tekst: "Het is feest in alle huizen", dichter: "Guido Gezelle", titel: "Kerstfeest" },
-            { tekst: "De kinderen zingen hun lied", dichter: "Albert Verwey", titel: "Kinderlied" },
-            { tekst: "Het hart is warm in winterkou", dichter: "Willem Kloos", titel: "Warm hart" },
-            { tekst: "De dagen lengen heel langzaam", dichter: "J.H. Leopold", titel: "Lengende dagen" },
-            { tekst: "Het oude jaar gaat heen", dichter: "P.C. Boutens", titel: "Oud jaar" },
-            { tekst: "De wereld wacht op nieuw begin", dichter: "Stijn Streuvels", titel: "Nieuw begin" },
-            { tekst: "Het ijs kraakt onder de voeten", dichter: "Henriette Roland Holst", titel: "Krakend ijs" },
-            { tekst: "Een mees pikt aan het raam", dichter: "Herman Gorter", titel: "Mees" },
-            { tekst: "De schoorsteen rookt, het is er goed", dichter: "Martinus Nijhoff", titel: "Thuis" },
-            { tekst: "Het vriest dat het kraakt", dichter: "J.C. Bloem", titel: "Strenge vorst" },
-            { tekst: "De schaatsen glijden op het ijs", dichter: "A. Roland Holst", titel: "Schaatsen" },
-            { tekst: "Het nieuwe jaar staat voor de deur", dichter: "Albert Verwey", titel: "Nieuwjaar" },
-            { tekst: "De nacht is stil en vol verwachting", dichter: "Guido Gezelle", titel: "Stille nacht" },
-            { tekst: "Het jaar keert in zichzelf terug", dichter: "Karel van de Woestijne", titel: "Jaarwende" },
-            { tekst: "De tijd staat even stil vannacht", dichter: "Willem Kloos", titel: "Oudejaarsavond" },
-            { tekst: "Het nieuwe licht breekt aan", dichter: "J.H. Leopold", titel: "Nieuw licht" }
+            { tekst: "Denkend aan Holland zie ik breede rivieren traag door oneindig laagland gaan.", dichter: "H. Marsman" },
+            { tekst: "Ik ben een God in 't diepst van mijn gedachten.", dichter: "Willem Kloos" },
+            { tekst: "Egidius, waer bestu blansen? Mi lanct na di, gheselle mijn.", dichter: "Anoniem, 14e eeuw" },
+            { tekst: "Een nieuwe lente en een nieuw geluid.", dichter: "Herman Gorter" },
+            { tekst: "De zachte krachten zullen zeker winnen.", dichter: "Henriëtte Roland Holst" },
+            { tekst: "Het regent en het is november.", dichter: "M. Vasalis" },
+            { tekst: "Gij moet niet denken dat het mij niet deert.", dichter: "Vondel" },
+            { tekst: "Natuur is voor tevredenen of legen.", dichter: "J.C. Bloem" },
+            { tekst: "De zee klotst voort in eindeloze deining.", dichter: "J.H. Leopold" },
+            { tekst: "Dien avond en die rooze.", dichter: "Guido Gezelle" },
+            { tekst: "O Nederland, let op uw saeck.", dichter: "Vondel" },
+            { tekst: "Voorbij, voorbij, o en voorgoed voorbij.", dichter: "J.C. Bloem" },
+            { tekst: "Stil, wees stil, want het heilige wordt geboren.", dichter: "Henriëtte Roland Holst" },
+            { tekst: "Ik zie de moeder de vrouw.", dichter: "Martinus Nijhoff" },
+            { tekst: "Mijn Vlaanderen, ik heb u hartelijk lief.", dichter: "Guido Gezelle" },
+            { tekst: "De vogel die op 't dak zijn liedje zingt.", dichter: "Jan Luyken" },
+            { tekst: "Wij waren kinderen, lang geleden.", dichter: "Willem Kloos" },
+            { tekst: "Het geluk zoekt ons als wij het niet zoeken.", dichter: "Jacob Cats" },
+            { tekst: "De taal is gans het volk.", dichter: "Prudens van Duyse" },
+            { tekst: "Nauw zichtbaar wiegen op een rij.", dichter: "J.H. Leopold" },
+            { tekst: "De avond komt zo langzaam aan.", dichter: "P.C. Boutens" },
+            { tekst: "Een taal die door den tijd geen schade lijdt.", dichter: "Vondel" },
+            { tekst: "Het schrijverke, zoo men dat ziet.", dichter: "Guido Gezelle" },
+            { tekst: "Gij waart een lied, een droom, een zachte klacht.", dichter: "Jacques Perk" },
+            { tekst: "Den uchtend loech al roosendal.", dichter: "Hadewijch" },
+            { tekst: "De wereld wacht, de wereld wordt herboren.", dichter: "Frederik van Eeden" },
+            { tekst: "Het is goed in de stilte te verwijlen.", dichter: "J.H. Leopold" },
+            { tekst: "Elk zingt zijn lied en dat is goed.", dichter: "Jacques Perk" },
+            { tekst: "Wien Neêrlands bloed door d'aadren vloeit.", dichter: "H. Tollens" },
+            { tekst: "De sterren blinken in de nacht.", dichter: "P.C. Hooft" },
+            { tekst: "Het hart is warm in winterkou.", dichter: "Willem Kloos" }
         ];
 
-        // Naamdagen (selectie)
-        const naamdagen = {
-            "1-1": "Nieuwjaar", "6-1": "Driekoningen", "14-2": "Valentijn",
-            "19-3": "Jozef", "1-4": "Hugo", "23-4": "Joris", "1-5": "Dag van de Arbeid",
-            "4-5": "Dodenherdenking", "5-5": "Bevrijdingsdag", "10-5": "Moederdag",
-            "21-6": "Langste dag", "15-8": "Maria", "21-9": "Matthëus",
-            "4-10": "Dierendag", "31-10": "Halloween", "1-11": "Allerheiligen",
-            "11-11": "Sint-Maarten", "5-12": "Sinterklaas", "21-12": "Kortste dag",
-            "25-12": "Kerstmis", "26-12": "Tweede Kerstdag", "31-12": "Oudejaarsavond"
+        const weerspreuk = [
+            "Januari nat, vullen schuur en vat.",
+            "Februari vol sneeuw, maakt 't hooi zo licht als veêuw.",
+            "Maart roert zijn staart.",
+            "April doet wat hij wil.",
+            "Koude mei geeft veel hooi en wei.",
+            "Juni nat, arm man zijn turfgat.",
+            "Sint-Jan met regen brengt natte wegen.",
+            "Op Maria's Geboort trekken de zwaluwen voort.",
+            "September zacht, lange winter verwacht.",
+            "Oktober schoon en warm, maakt de boeren niet arm.",
+            "November nat en droog, met vroege sneeuwvloog.",
+            "Kerstmis in het wit, Pasen in 't slijk beslit."
+        ];
+
+        const naamdagenData = {
+            1: { 1: "Nieuwjaar", 6: "Driekoningen" },
+            2: { 14: "Valentijn" },
+            3: { 19: "Jozef" },
+            4: { 23: "Joris", 27: "Koningsdag" },
+            5: { 1: "Dag v.d. Arbeid", 4: "Dodenherdenking", 5: "Bevrijdingsdag" },
+            6: { 21: "Langste dag", 24: "Midzomer" },
+            7: { 26: "Anna" },
+            8: { 15: "Maria Hemelvaart" },
+            9: { 21: "Mattheüs" },
+            10: { 4: "Dierendag", 31: "Halloween" },
+            11: { 1: "Allerheiligen", 11: "Sint-Maarten" },
+            12: { 5: "Sinterklaas", 21: "Kortste dag", 25: "Kerstmis", 26: "2e Kerstdag", 31: "Oudjaar" }
         };
 
-        const dagen = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
-        const maanden = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+        const heiligen = [
+            "Maria", "Jozef", "Petrus", "Paulus", "Johannes", "Andreas",
+            "Catharina", "Barbara", "Elisabeth", "Anna", "Martinus", "Nicolaas"
+        ];
 
-        // Huidig blad (opgeslagen in localStorage)
+        const dagen = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+        const maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni',
+                         'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
         let huidigBladIndex = parseInt(localStorage.getItem('pruimelaarBlad')) || dagVanHetJaar(new Date());
 
-        function dagVanHetJaar(datum) {
-            const start = new Date(datum.getFullYear(), 0, 0);
-            const diff = datum - start;
-            const eenDag = 1000 * 60 * 60 * 24;
-            return Math.floor(diff / eenDag) - 1;
+        function dagVanHetJaar(d) {
+            const start = new Date(d.getFullYear(), 0, 0);
+            return Math.floor((d - start) / 86400000);
         }
 
-        function getWeekNummer(datum) {
-            const d = new Date(Date.UTC(datum.getFullYear(), datum.getMonth(), datum.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        function getWeekNummer(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
         }
 
-        function getDatumVanDagIndex(index, jaar) {
-            const datum = new Date(jaar, 0, 1);
-            datum.setDate(datum.getDate() + index);
-            return datum;
+        function getDatum(index) {
+            const d = new Date(new Date().getFullYear(), 0, 1);
+            d.setDate(d.getDate() + index - 1);
+            return d;
         }
 
-        function updateKalender(bladIndex, isVolgendBlad = false) {
-            const jaar = new Date().getFullYear();
-            const datum = getDatumVanDagIndex(bladIndex, jaar);
+        function getZonTijden(maand) {
+            const tijden = [
+                { op: "8.47", onder: "16.52" }, { op: "8.10", onder: "17.40" },
+                { op: "7.10", onder: "18.30" }, { op: "6.55", onder: "20.20" },
+                { op: "5.50", onder: "21.10" }, { op: "5.20", onder: "22.00" },
+                { op: "5.35", onder: "21.50" }, { op: "6.20", onder: "21.00" },
+                { op: "7.10", onder: "19.55" }, { op: "7.55", onder: "18.45" },
+                { op: "7.50", onder: "16.50" }, { op: "8.40", onder: "16.30" }
+            ];
+            return tijden[maand];
+        }
 
-            const prefix = isVolgendBlad ? 'volgend-' : '';
-            const container = isVolgendBlad ? document.getElementById('volgend-blad') : document;
+        function renderBlad(index, element) {
+            const datum = getDatum(index);
+            const dag = datum.getDate();
+            const maand = datum.getMonth();
+            const dagNaam = dagen[datum.getDay()];
+            const weekNr = getWeekNummer(datum);
+            const zon = getZonTijden(maand);
+            const isZondag = datum.getDay() === 0;
 
-            if (isVolgendBlad) {
-                container.innerHTML = `
-                    <div class="perforatie"></div>
-                    <div class="datum-banner">
-                        <div class="week-nummer">Week ${getWeekNummer(datum)}</div>
-                        <div class="dag-naam">${dagen[datum.getDay()]}</div>
-                        <div class="dag-nummer">${datum.getDate()}</div>
-                        <div class="maand-jaar">${maanden[datum.getMonth()]} ${jaar}</div>
-                    </div>
-                    <div class="inhoud">
-                        <div>
-                            <p class="citaat">${gedichten[bladIndex % gedichten.length].tekst}</p>
-                            <p class="bron"><span class="dichter">${gedichten[bladIndex % gedichten.length].dichter}</span> — ${gedichten[bladIndex % gedichten.length].titel}</p>
+            const feest = naamdagenData[maand + 1]?.[dag] || "";
+            const gedicht = gedichten[index % gedichten.length];
+            const spreuk = weerspreuk[maand];
+            const heilig = heiligen[(dag + maand) % heiligen.length];
+
+            element.innerHTML = `
+                <div class="blad-inhoud ${isZondag ? 'zondag' : ''}">
+                    <div class="maand-header">
+                        <div class="maand-naam">${maanden[maand]}</div>
+                        <div class="maand-info">
+                            ${new Date().getFullYear()}<br>
+                            dag ${index} van 365
                         </div>
-                        <div class="naamdag">${naamdagen[`${datum.getDate()}-${datum.getMonth()+1}`] || ''}</div>
                     </div>
+
+                    <div class="week-info">
+                        <span>${weekNr}e week</span>
+                        <span>☀ ${zon.op} – ${zon.onder}</span>
+                    </div>
+
+                    <div class="datum-groot">
+                        <div class="dag-nummer">${dag}</div>
+                    </div>
+
+                    ${feest ? `<div class="feestdag">${feest}</div>` : ''}
+
+                    <div class="dag-naam">${dagNaam}</div>
+
+                    <div class="naamdagen">
+                        <strong>H. ${heilig}</strong>
+                    </div>
+
+                    <div class="citaat-sectie">
+                        <div class="citaat-tekst">"${gedicht.tekst}"</div>
+                        <div class="citaat-bron">— ${gedicht.dichter}</div>
+                    </div>
+
+                    <div class="weerspreuk">
+                        <div class="weerspreuk-label">Weerspreuk</div>
+                        <div class="weerspreuk-tekst">${spreuk}</div>
+                    </div>
+
                     <div class="kalender-footer">
                         <div class="kalender-titel">Den Pruimelaar</div>
-                        <div class="kalender-subtitel">Nederlandse Poëzie</div>
                     </div>
-                `;
-            } else {
-                document.getElementById('dag-nummer').textContent = datum.getDate();
-                document.getElementById('dag-naam').textContent = dagen[datum.getDay()];
-                document.getElementById('maand-jaar').textContent = `${maanden[datum.getMonth()]} ${jaar}`;
-                document.getElementById('week-nummer').textContent = `Week ${getWeekNummer(datum)}`;
-
-                const gedicht = gedichten[bladIndex % gedichten.length];
-                document.getElementById('citaat').textContent = gedicht.tekst;
-                document.getElementById('bron').innerHTML = `<span class="dichter">${gedicht.dichter}</span> — ${gedicht.titel}`;
-
-                const naamdag = naamdagen[`${datum.getDate()}-${datum.getMonth()+1}`];
-                document.getElementById('naamdag').textContent = naamdag || '';
-            }
+                </div>
+            `;
         }
 
-        // Scheur interactie
+        // Interactie
         const blad = document.getElementById('kalender-blad');
-        let startY = 0;
-        let currentY = 0;
-        let isDragging = false;
+        const volgend = document.getElementById('volgend-blad');
+        let startY = 0, currentY = 0, isDragging = false;
 
         function startDrag(e) {
             isDragging = true;
-            startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
             blad.classList.remove('terugveren');
-            blad.style.transition = 'none';
         }
 
         function doDrag(e) {
             if (!isDragging) return;
             e.preventDefault();
-
-            currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            const deltaY = currentY - startY;
-
-            if (deltaY > 0) {
-                const rotation = Math.min(deltaY / 5, 40);
-                const translateY = Math.min(deltaY / 3, 30);
-                blad.style.transform = `rotateX(-${rotation}deg) translateY(-${translateY}px)`;
+            currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const delta = currentY - startY;
+            if (delta > 0) {
+                const rot = Math.min(delta / 4, 50);
+                blad.style.transform = `rotateX(-${rot}deg)`;
             }
         }
 
-        function endDrag(e) {
+        function endDrag() {
             if (!isDragging) return;
             isDragging = false;
+            const delta = currentY - startY;
 
-            const deltaY = currentY - startY;
-
-            if (deltaY > 120) {
-                // Scheur af
+            if (delta > 100) {
                 blad.classList.add('scheuren');
-
                 setTimeout(() => {
                     huidigBladIndex++;
                     localStorage.setItem('pruimelaarBlad', huidigBladIndex);
-
                     blad.classList.remove('scheuren');
                     blad.style.transform = '';
-
-                    updateKalender(huidigBladIndex);
-                    updateKalender(huidigBladIndex + 1, true);
-                }, 600);
+                    renderBlad(huidigBladIndex, blad);
+                    renderBlad(huidigBladIndex + 1, volgend);
+                }, 500);
             } else {
-                // Veer terug
                 blad.classList.add('terugveren');
                 blad.style.transform = '';
             }
         }
 
-        // Event listeners
         blad.addEventListener('mousedown', startDrag);
         blad.addEventListener('touchstart', startDrag, { passive: false });
-
         document.addEventListener('mousemove', doDrag);
         document.addEventListener('touchmove', doDrag, { passive: false });
-
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchend', endDrag);
 
-        // Initialiseer
-        updateKalender(huidigBladIndex);
-        updateKalender(huidigBladIndex + 1, true);
+        // Init
+        renderBlad(huidigBladIndex, blad);
+        renderBlad(huidigBladIndex + 1, volgend);
     </script>
 </body>
 </html>
